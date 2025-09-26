@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chip Clicker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script async defer src="https://apis.google.com/js/api.js"></script>
+    <script async defer src="https://accounts.google.com/gsi/client"></script>
+    <script type="importmap">
+    {
+      "imports": {
+        "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+        "react/": "https://aistudiocdn.com/react@^19.1.1/",
+        "react": "https://aistudiocdn.com/react@^19.1.1"
+      }
+    }
+    </script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Poppins', 'sans-serif'],
+              mono: ['Roboto Mono', 'monospace'],
+            },
+          }
+        }
+      }
+    </script>
+    <script type="module" src="index.tsx"></script>
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* Accordion transition */
+        .accordion-content {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.3s ease-in-out;
+        }
+        .accordion-content > * { overflow: hidden; }
+        .accordion-content-expanded { grid-template-rows: 1fr; }
+
+        /* Animations */
+        @keyframes float-up {
+            from { opacity: 1; transform: translateY(0) translateX(-50%) scale(1); }
+            to { opacity: 0; transform: translateY(-100px) translateX(-50%) scale(0.8); }
+        }
+        .animate-float-up { animation: float-up 1.2s ease-out forwards; }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        .animate-shake { animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both; }
+
+        @keyframes pulse-subtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+        .animate-pulse-subtle { animation: pulse-subtle 4s ease-in-out infinite; }
+
+        @keyframes boost-glow {
+            0%, 100% { filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.5)); }
+            50% { filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.8)); }
+        }
+        .animate-boost-glow { animation: boost-glow 1.5s ease-in-out infinite; }
+        
+        @keyframes slide-in-down {
+            from { transform: translateY(-100%) translateX(-50%); opacity: 0; }
+            to { transform: translateY(0) translateX(-50%); opacity: 1; }
+        }
+        .animate-slide-in-down { animation: slide-in-down 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+        
+        @keyframes fade-in-scale {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        .animate-fade-in-scale { animation: fade-in-scale 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+
+        @keyframes collect-effect {
+            0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -150%) scale(0.5); }
+        }
+        .animate-collect-effect { animation: collect-effect 0.4s ease-in forwards; }
+
+        @keyframes fade-out {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .animate-fade-out { animation: fade-out 0.5s ease-out forwards; }
+
+        @keyframes golden-bob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .animate-golden-bob { animation: golden-bob 2s ease-in-out infinite; }
+
+        @keyframes float-across {
+            from { transform: translateX(0) rotate(0deg); }
+            to { transform: translateX(calc(100vw + 100px)) rotate(360deg); }
+        }
+        .animate-float-across { animation: float-across linear infinite; }
+        
+        @keyframes tier-unlock {
+            0% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
+            50% { box-shadow: 0 0 20px 5px rgba(250, 204, 21, 0.6); }
+            100% { box-shadow: 0 0 0 0 rgba(250, 204, 21, 0); }
+        }
+        .animate-tier-unlock { animation: tier-unlock 0.8s ease-in-out; }
+        
+        @keyframes shine-pop {
+            50% { transform: scale(1.02); }
+        }
+        .animate-shine-pop { animation: shine-pop 0.6s ease-out; }
+
+        @keyframes purchase-feedback {
+            50% { transform: scale(1.02); background-color: rgba(74, 222, 128, 0.1); }
+        }
+        .animate-purchase-feedback { animation: purchase-feedback 0.6s ease-out; }
+        
+        @keyframes icon-purchase-effect {
+            from { transform: scale(1) rotate(0); opacity: 0.8; }
+            to { transform: scale(2.5) rotate(15deg); opacity: 0; }
+        }
+        .animate-icon-purchase-effect { animation: icon-purchase-effect 0.5s ease-out forwards; }
+
+        .button-affordable-glow { animation: cost-glow 2.5s infinite ease-in-out; }
+        @keyframes cost-glow {
+            50% { box-shadow: 0 0 12px rgba(74, 222, 128, 0.6); }
+        }
+        
+        @keyframes activity-pulse {
+            50% { background-color: #6ee7b7; box-shadow: 0 0 6px #6ee7b7; }
+        }
+        .animate-activity-pulse { animation: activity-pulse 2s infinite; }
+        
+        @keyframes cps-pulse {
+            50% { color: #d1fae5; text-shadow: 0 0 5px rgba(52, 211, 153, 0.8); }
+        }
+        .animate-cps-pulse { animation: cps-pulse 2.5s infinite ease-in-out; }
+
+        @keyframes subtle-gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .animate-subtle-gradient {
+            background: linear-gradient(-45deg, #0f172a, #1e293b, #0f172a, #334155);
+            background-size: 400% 400%;
+            animation: subtle-gradient 30s ease infinite;
+        }
+
+        /* Custom Building Animations */
+        .animate-robot-walk { animation: robot-walk 2.5s infinite ease-in-out; }
+        @keyframes robot-walk {
+            0%, 100% { transform: translateY(0) rotate(0); }
+            25% { transform: translateY(-3px) rotate(-4deg); }
+            75% { transform: translateY(2px) rotate(4deg); }
+        }
+
+        .animate-chip-pulse { animation: chip-pulse 2s infinite ease-in-out; }
+        @keyframes chip-pulse {
+            50% { filter: drop-shadow(0 0 5px #facc15); }
+        }
+
+        .animate-factory-shake { animation: factory-shake 4s infinite linear; }
+        @keyframes factory-shake {
+            2%, 98% { transform: translate(0, 0) rotate(0); }
+            3% { transform: translate(1px, -1px) rotate(-1deg); }
+            4% { transform: translate(-1px, 1px) rotate(1deg); }
+            5% { transform: translate(0, 0) rotate(0); }
+        }
+
+        .animate-led-blink { animation: led-blink 1.5s infinite steps(1, end); }
+        @keyframes led-blink {
+            50% { filter: brightness(1.75); }
+        }
+
+        .animate-truck-rumble { animation: truck-rumble 0.5s infinite linear; }
+        @keyframes truck-rumble {
+            0%, 100% { transform: translate(0, 0); }
+            25% { transform: translate(-1px, 1px); }
+            75% { transform: translate(1px, -1px); }
+        }
+
+        .animate-globe-spin { animation: globe-spin 20s infinite linear; }
+        @keyframes globe-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .animate-brain-glow { animation: brain-glow 2s infinite ease-in-out; }
+        @keyframes brain-glow {
+            50% { filter: drop-shadow(0 0 8px rgba(192, 38, 211, 0.9)); }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 animate-subtle-gradient">
+    <div id="root"></div>
+</body>
+</html>
