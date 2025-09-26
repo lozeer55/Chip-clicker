@@ -68,6 +68,13 @@
             50% { transform: scale(1.03); }
         }
         .animate-pulse-subtle { animation: pulse-subtle 4s ease-in-out infinite; }
+        
+        @keyframes chip-press-effect {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(0.92); filter: brightness(1.2); }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+        .animate-chip-press { animation: chip-press-effect 0.15s ease-out; }
 
         @keyframes boost-glow {
             0%, 100% { filter: drop-shadow(0 0 10px rgba(236, 72, 153, 0.5)); }

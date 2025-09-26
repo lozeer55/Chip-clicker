@@ -92,7 +92,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
       role="dialog"
     >
       <div
-        className="bg-slate-800 rounded-2xl shadow-xl p-6 w-full max-w-md text-slate-200 border border-slate-600/80"
+        className="bg-slate-800 rounded-2xl shadow-xl p-6 w-full max-w-md text-slate-200 border border-slate-600/80 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">
@@ -115,21 +115,40 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
             <div className="space-y-3">
               <SettingsToggle 
                 label="Sound Effects"
-                isEnabled={settings.soundEnabled}
-                onToggle={() => onSettingsChange({ soundEnabled: !settings.soundEnabled })}
+                isEnabled={settings.sfxEnabled}
+                onToggle={() => onSettingsChange({ sfxEnabled: !settings.sfxEnabled })}
               />
-              <div className={`p-3 bg-slate-700/50 border border-slate-600 rounded-lg transition-opacity ${!settings.soundEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
-                <label htmlFor="volume-slider" className="font-semibold text-slate-200 mb-2 block text-sm">Volume</label>
+              <div className={`p-3 bg-slate-700/50 border border-slate-600 rounded-lg transition-opacity ${!settings.sfxEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                <label htmlFor="sfx-volume-slider" className="font-semibold text-slate-200 mb-2 block text-sm">SFX Volume</label>
                 <input
-                  id="volume-slider"
+                  id="sfx-volume-slider"
                   type="range"
                   min="0"
                   max="1"
                   step="0.01"
-                  value={settings.volume}
-                  onChange={e => onSettingsChange({ volume: parseFloat(e.target.value) })}
+                  value={settings.sfxVolume}
+                  onChange={e => onSettingsChange({ sfxVolume: parseFloat(e.target.value) })}
                   className="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-pink-500"
-                  disabled={!settings.soundEnabled}
+                  disabled={!settings.sfxEnabled}
+                />
+              </div>
+              <SettingsToggle 
+                label="Background Music"
+                isEnabled={settings.musicEnabled}
+                onToggle={() => onSettingsChange({ musicEnabled: !settings.musicEnabled })}
+              />
+              <div className={`p-3 bg-slate-700/50 border border-slate-600 rounded-lg transition-opacity ${!settings.musicEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                <label htmlFor="music-volume-slider" className="font-semibold text-slate-200 mb-2 block text-sm">Music Volume</label>
+                <input
+                  id="music-volume-slider"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.01"
+                  value={settings.musicVolume}
+                  onChange={e => onSettingsChange({ musicVolume: parseFloat(e.target.value) })}
+                  className="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                  disabled={!settings.musicEnabled}
                 />
               </div>
             </div>

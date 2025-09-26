@@ -36,8 +36,10 @@ export interface FloatingNumberType {
 }
 
 export interface GameSettings {
-  soundEnabled: boolean;
-  volume: number;
+  sfxEnabled: boolean;
+  sfxVolume: number;
+  musicEnabled: boolean;
+  musicVolume: number;
   showFloatingNumbers: boolean;
   showParticles: boolean;
   showBackgroundEffects: boolean;

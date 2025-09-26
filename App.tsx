@@ -13,7 +13,7 @@ import GoldenChip from './components/GoldenBanana';
 import MobileNav from './components/MobileNav'; // Import the new component
 import type { Upgrade, FloatingNumberType, GameSettings, PlayerStats, Achievement, ActiveBoost, MilestoneToastInfo, AchievementToastInfo, GoldenChipType, SaveState, MobileView } from './types';
 import { INITIAL_UPGRADES, SettingsIcon, MILESTONES, ACHIEVEMENTS, AchievementIcon, GOLDEN_CHIP_LIFESPAN, GOLDEN_CHIP_SPAWN_INTERVAL_MIN, GOLDEN_CHIP_SPAWN_INTERVAL_MAX, GOLDEN_CHIP_BOOST_MULTIPLIER, GOLDEN_CHIP_BOOST_DURATION } from './constants';
-import { clickSound, milestoneSound, purchaseSound, achievementSound, goldenBananaSpawnSound, goldenBananaClickSound } from './sounds';
+import { backgroundMusic, clickSound, milestoneSound, purchaseSound, achievementSound, goldenChipSpawnSound, goldenChipClickSound } from './sounds';
 
 const SAVE_KEY = 'chipClickerSave';
 const SETTINGS_KEY = 'chipClickerSettings';
@@ -70,8 +70,10 @@ const loadSettings = (): GameSettings => {
         if (savedData) {
             const parsed = JSON.parse(savedData);
             return {
-                soundEnabled: typeof parsed.soundEnabled === 'boolean' ? parsed.soundEnabled : true,
-                volume: typeof parsed.volume === 'number' ? parsed.volume : 0.5,
+                sfxEnabled: typeof parsed.sfxEnabled === 'boolean' ? parsed.sfxEnabled : true,
+                sfxVolume: typeof parsed.sfxVolume === 'number' ? parsed.sfxVolume : 0.5,
+                musicEnabled: typeof parsed.musicEnabled === 'boolean' ? parsed.musicEnabled : true,
+                musicVolume: typeof parsed.musicVolume === 'number' ? parsed.musicVolume : 0.3,
                 showFloatingNumbers: typeof parsed.showFloatingNumbers === 'boolean' ? parsed.showFloatingNumbers : true,
                 showParticles: typeof parsed.showParticles === 'boolean' ? parsed.showParticles : true,
                 showBackgroundEffects: typeof parsed.showBackgroundEffects === 'boolean' ? parsed.showBackgroundEffects : true,
@@ -81,8 +83,10 @@ const loadSettings = (): GameSettings => {
         console.error("Failed to load settings:", error);
     }
     return { 
-        soundEnabled: true, 
-        volume: 0.5,
+        sfxEnabled: true, 
+        sfxVolume: 0.5,
+        musicEnabled: true,
+        musicVolume: 0.3,
         showFloatingNumbers: true,
         showParticles: true,
         showBackgroundEffects: true,
@@ -107,10 +111,12 @@ const App: React.FC = () => {
   const [unlockedAchievements, setUnlockedAchievements] = useState<Set<string>>(initialUnlockedAchievements);
   const [goldenChips, setGoldenChips] = useState<GoldenChipType[]>([]);
   const [activeMobileView, setActiveMobileView] = useState<MobileView>('main');
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   const particleCanvasRef = useRef<ParticleCanvasHandle>(null);
   const goldenChipTimerRef = useRef<number | null>(null);
   const cyclesRef = useRef(cycles);
+  const musicRef = useRef<HTMLAudioElement | null>(null);
   cyclesRef.current = cycles;
   
   const gameState = useMemo((): SaveState => ({
@@ -120,16 +126,36 @@ const App: React.FC = () => {
     stats: playerStats,
     unlockedAchievements: Array.from(unlockedAchievements),
   }), [cycles, upgrades, currentMilestoneIndex, playerStats, unlockedAchievements]);
+  
+  useEffect(() => {
+    if (!musicRef.current) {
+        musicRef.current = new Audio(backgroundMusic);
+        musicRef.current.loop = true;
+    }
+  }, []);
+
+  useEffect(() => {
+    const music = musicRef.current;
+    if (music) {
+        music.volume = settings.musicVolume;
+        if (settings.musicEnabled && hasInteracted) {
+            music.play().catch(e => console.warn("Music playback failed, likely due to autoplay policy. Will retry on next interaction.", e));
+        } else {
+            music.pause();
+        }
+    }
+  }, [settings.musicEnabled, settings.musicVolume, hasInteracted]);
+
 
   const playSound = useCallback((src: string) => {
-    if (!settings.soundEnabled) return;
+    if (!settings.sfxEnabled) return;
     
     const sound = new Audio(src);
-    sound.volume = settings.volume;
+    sound.volume = settings.sfxVolume;
     sound.play().catch(error => {
         console.warn("Sound playback failed:", error);
     });
-  }, [settings.soundEnabled, settings.volume]);
+  }, [settings.sfxEnabled, settings.sfxVolume]);
   
   const totalBoostMultiplier = useCallback((type: 'click_multiplier' | 'bps_multiplier') => {
       const now = Date.now();
@@ -287,7 +313,7 @@ const App: React.FC = () => {
             goldenChipTimerRef.current = setTimeout(() => {
                 setGoldenChips(prev => {
                     if (prev.length === 0) {
-                        playSound(goldenBananaSpawnSound);
+                        playSound(goldenChipSpawnSound);
                         return [{
                             id: Date.now(),
                             x: 10 + Math.random() * 80,
@@ -326,6 +352,7 @@ const App: React.FC = () => {
 
 
   const handleChipClick = useCallback((e: React.MouseEvent<HTMLElement>) => {
+    if(!hasInteracted) setHasInteracted(true);
     playSound(clickSound);
     
     const isBoosted = totalBoostMultiplier('click_multiplier') > 1;
@@ -353,7 +380,7 @@ const App: React.FC = () => {
       particleCanvasRef.current?.createBurst(e.clientX, e.clientY, !!isBoosted, amount);
     }
 
-  }, [cyclesPerClick, playSound, totalBoostMultiplier, settings.showFloatingNumbers, settings.showParticles]);
+  }, [cyclesPerClick, playSound, totalBoostMultiplier, settings.showFloatingNumbers, settings.showParticles, hasInteracted]);
 
   const handlePurchaseUpgrade = useCallback((upgradeId: string, levelsToBuy: number) => {
     const upgrade = upgrades.find(u => u.id === upgradeId);
@@ -401,7 +428,7 @@ const App: React.FC = () => {
   };
 
   const handleGoldenChipClick = useCallback((id: number) => {
-      playSound(goldenBananaClickSound);
+      playSound(goldenChipClickSound);
       
       setGoldenChips(prev => prev.map(gc => 
           gc.id === id ? { ...gc, status: 'clicked' } : gc

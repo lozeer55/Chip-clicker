@@ -13,13 +13,26 @@ interface GameAreaProps {
   activeBoosts: ActiveBoost[];
 }
 
-const ChipSVG: React.FC<{ onClick: (e: React.MouseEvent<HTMLElement>) => void; isBoostActive: boolean }> = ({ onClick, isBoostActive }) => (
+const ChipSVG: React.FC<{ onClick: (e: React.MouseEvent<HTMLElement>) => void; isBoostActive: boolean }> = ({ onClick, isBoostActive }) => {
+    const [animationClass, setAnimationClass] = useState('');
+
+    const handleClick = (e: React.MouseEvent<HTMLElement>) => {
+        setAnimationClass('animate-chip-press');
+        onClick(e);
+    };
+
+    return (
     <div
-        className={`relative w-48 h-48 sm:w-64 sm:h-64 lg:w-full lg:h-auto lg:max-w-xs cursor-pointer group animate-pulse-subtle ${isBoostActive ? 'animate-boost-glow' : ''}`}
-        onClick={onClick}
+        className={`relative w-48 h-48 sm:w-64 sm:h-64 lg:w-full lg:h-auto lg:max-w-xs cursor-pointer animate-pulse-subtle ${isBoostActive ? 'animate-boost-glow' : ''}`}
+        onClick={handleClick}
         aria-label="Click to generate cycles"
     >
-        <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg" className="w-full h-full transition-transform duration-100 group-active:scale-95 drop-shadow-[0_10px_8px_rgba(0,0,0,0.25)] group-hover:drop-shadow-[0_15px_15px_rgba(0,0,0,0.3)]">
+        <svg 
+            viewBox="0 0 256 256" 
+            xmlns="http://www.w3.org/2000/svg" 
+            onAnimationEnd={() => setAnimationClass('')}
+            className={`w-full h-full drop-shadow-[0_10px_8px_rgba(0,0,0,0.25)] hover:drop-shadow-[0_15px_15px_rgba(0,0,0,0.3)] ${animationClass}`}
+        >
             <defs>
                 <radialGradient id="chipGlow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
                     <stop offset="0%" style={{stopColor: '#f472b6', stopOpacity: 0.6}} />
@@ -42,7 +55,7 @@ const ChipSVG: React.FC<{ onClick: (e: React.MouseEvent<HTMLElement>) => void; i
             <line x1="56" y1="56" x2="88" y2="56" fill="none" stroke="#94a3b8" strokeLinecap="round" strokeLinejoin="round" strokeWidth="12"/>
         </svg>
     </div>
-);
+)};
 
 const ActiveBoostItem: React.FC<{ boost: ActiveBoost }> = ({ boost }) => {
     const [timeLeft, setTimeLeft] = useState(0);
