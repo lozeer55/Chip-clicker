@@ -111,3 +111,5 @@ export type SaveState = {
     stats: PlayerStats;
     unlockedAchievements: string[];
 };
+
+export type MobileView = 'main' | 'upgrades' | 'buildings';

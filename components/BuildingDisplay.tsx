@@ -37,12 +37,12 @@ const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ upgrades }) => {
          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-3">
             {ownedUpgrades.map((upgrade, index) => (
               <div key={upgrade.id} className="bg-slate-800/70 p-3 rounded-lg border border-slate-700/80 flex flex-col items-center justify-center text-center aspect-square transition-all duration-200 hover:scale-105 hover:bg-slate-700/80" title={`${upgrade.name} - Level ${upgrade.level}`}>
-                <div className={`relative text-amber-400 ${getAnimationClassForUpgrade(upgrade.id)}`} style={{ animationDelay: `${(index % 8) * 150}ms` }}>
-                    <div className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 animate-activity-pulse" style={{ animationDelay: `${(index % 8) * 200}ms` }}></div>
+                <div className={`relative text-pink-400 ${getAnimationClassForUpgrade(upgrade.id)}`} style={{ animationDelay: `${(index % 8) * 150}ms` }}>
+                    <div className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-pink-500 animate-activity-pulse" style={{ animationDelay: `${(index % 8) * 200}ms` }}></div>
                     {React.cloneElement(upgrade.icon, { className: 'h-10 w-10 mb-1' })}
                 </div>
                 <span className="font-bold text-slate-200 text-lg leading-tight font-mono">{upgrade.level}</span>
-                <p className="text-xs text-emerald-300 font-semibold mt-1 animate-cps-pulse font-mono" style={{ animationDelay: `${(index % 8) * 120}ms` }}>
+                <p className="text-xs text-pink-300 font-semibold mt-1 animate-cps-pulse font-mono" style={{ animationDelay: `${(index % 8) * 120}ms` }}>
                     { (upgrade.power * upgrade.level).toLocaleString() } CPS
                 </p>
               </div>

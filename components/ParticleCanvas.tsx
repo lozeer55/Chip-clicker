@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
 
-const PARTICLE_COLORS = ['#3498db', '#2ecc71', '#9b59b6', '#f1c40f', '#ecf0f1', '#1abc9c'];
-const BOOSTED_PARTICLE_COLORS = ['#ffffff', '#fef08a', '#ffc700', '#fb923c', '#f59e0b'];
+const PARTICLE_COLORS = ['#a855f7', '#d946ef', '#f472b6', '#ecf0f1', '#a78bfa', '#c084fc'];
+const BOOSTED_PARTICLE_COLORS = ['#ffffff', '#fbcfe8', '#f472b6', '#d946ef', '#c084fc'];
 
 interface Particle {
   x: number;
@@ -31,7 +31,7 @@ const ParticleCanvas = forwardRef<ParticleCanvasHandle, {}>((props, ref) => {
     createBurst: (x, y, isBoosted, amount) => {
       const newParticles: Particle[] = [];
       if (isBoosted) {
-          const numParticles = 30 + Math.floor(Math.log2(amount + 1)) * 4;
+          const numParticles = 20 + Math.floor(Math.log2(amount + 1)) * 3;
           const speed = 4 + Math.log2(amount + 1) * 0.5;
           const shapes: Array<'star' | 'circle'> = ['star', 'circle'];
 
@@ -54,7 +54,7 @@ const ParticleCanvas = forwardRef<ParticleCanvasHandle, {}>((props, ref) => {
               });
           }
       } else {
-          const numParticles = Math.min(25, 8 + Math.floor(amount / 20));
+          const numParticles = Math.min(20, 5 + Math.floor(amount / 25));
           const speed = Math.min(5, 2 + amount * 0.02);
           const shapes: Array<'circle' | 'square' | 'line'> = ['circle', 'square', 'line'];
 

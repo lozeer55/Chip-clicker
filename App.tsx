@@ -10,7 +10,8 @@ import MilestoneToast from './components/MilestoneToast';
 import AchievementToast from './components/AchievementToast';
 import BuildingDisplay from './components/BuildingDisplay';
 import GoldenChip from './components/GoldenBanana';
-import type { Upgrade, FloatingNumberType, GameSettings, PlayerStats, Achievement, ActiveBoost, MilestoneToastInfo, AchievementToastInfo, GoldenChipType, SaveState } from './types';
+import MobileNav from './components/MobileNav'; // Import the new component
+import type { Upgrade, FloatingNumberType, GameSettings, PlayerStats, Achievement, ActiveBoost, MilestoneToastInfo, AchievementToastInfo, GoldenChipType, SaveState, MobileView } from './types';
 import { INITIAL_UPGRADES, SettingsIcon, MILESTONES, ACHIEVEMENTS, AchievementIcon, GOLDEN_CHIP_LIFESPAN, GOLDEN_CHIP_SPAWN_INTERVAL_MIN, GOLDEN_CHIP_SPAWN_INTERVAL_MAX, GOLDEN_CHIP_BOOST_MULTIPLIER, GOLDEN_CHIP_BOOST_DURATION } from './constants';
 import { clickSound, milestoneSound, purchaseSound, achievementSound, goldenBananaSpawnSound, goldenBananaClickSound } from './sounds';
 
@@ -105,6 +106,7 @@ const App: React.FC = () => {
   const [playerStats, setPlayerStats] = useState<PlayerStats>(initialStats);
   const [unlockedAchievements, setUnlockedAchievements] = useState<Set<string>>(initialUnlockedAchievements);
   const [goldenChips, setGoldenChips] = useState<GoldenChipType[]>([]);
+  const [activeMobileView, setActiveMobileView] = useState<MobileView>('main');
 
   const particleCanvasRef = useRef<ParticleCanvasHandle>(null);
   const goldenChipTimerRef = useRef<number | null>(null);
@@ -465,7 +467,7 @@ const App: React.FC = () => {
 
 
   return (
-    <div className="h-screen bg-transparent text-slate-200 flex flex-col overflow-hidden relative font-sans">
+    <div className="h-screen bg-transparent text-slate-200 flex flex-col overflow-hidden relative font-sans pb-20 lg:pb-0">
       {settings.showBackgroundEffects && <BackgroundEffects />}
       {milestoneToast && (
         <MilestoneToast 
@@ -486,22 +488,22 @@ const App: React.FC = () => {
       <div className="absolute top-4 right-4 z-50 flex gap-2 items-center">
         <button
           onClick={() => setIsAchievementsOpen(true)}
-          className="p-3 rounded-full bg-slate-900/50 hover:bg-slate-800/80 text-slate-300 border border-slate-700 backdrop-blur-sm transition-all shadow-lg hover:shadow-amber-500/10 active:scale-95 hover:text-amber-300"
+          className="p-3 rounded-full bg-slate-900/50 hover:bg-slate-800/80 text-slate-300 border border-slate-700 backdrop-blur-sm transition-all shadow-lg hover:shadow-pink-500/10 active:scale-95 hover:text-pink-300"
           aria-label="Open achievements"
         >
           <AchievementIcon />
         </button>
         <button
           onClick={() => setIsSettingsOpen(true)}
-          className="p-3 rounded-full bg-slate-900/50 hover:bg-slate-800/80 text-slate-300 border border-slate-700 backdrop-blur-sm transition-all shadow-lg hover:shadow-amber-500/10 active:scale-95 hover:text-amber-300"
+          className="p-3 rounded-full bg-slate-900/50 hover:bg-slate-800/80 text-slate-300 border border-slate-700 backdrop-blur-sm transition-all shadow-lg hover:shadow-pink-500/10 active:scale-95 hover:text-pink-300"
           aria-label="Open settings"
         >
           <SettingsIcon />
         </button>
       </div>
 
-      <main className="w-full flex-grow p-4 grid grid-cols-1 lg:grid-cols-7 gap-4 min-h-0">
-        {/* Left Column */}
+      {/* Desktop Layout */}
+      <main className="hidden lg:grid w-full flex-grow p-4 grid-cols-1 lg:grid-cols-7 gap-4 min-h-0">
         <div className="lg:col-span-2 min-h-0">
             <GameArea
               cycles={cycles}
@@ -513,8 +515,6 @@ const App: React.FC = () => {
               activeBoosts={activeBoosts}
             />
         </div>
-
-        {/* Middle Column */}
         <div className="lg:col-span-3 h-full flex flex-col gap-4 min-h-0">
              <MilestoneTracker 
                 currentMilestone={currentMilestone}
@@ -524,8 +524,6 @@ const App: React.FC = () => {
                 <BuildingDisplay upgrades={upgrades} />
             </div>
         </div>
-
-        {/* Right Column */}
         <div className="lg:col-span-2 min-h-0">
              <UpgradeStore
               upgrades={upgrades}
@@ -534,6 +532,41 @@ const App: React.FC = () => {
             />
         </div>
       </main>
+
+      {/* Mobile Layout */}
+      <main className="lg:hidden w-full flex-grow p-4 flex flex-col min-h-0">
+        <div className="flex-shrink-0 mb-4">
+            <MilestoneTracker 
+                currentMilestone={currentMilestone}
+                playerStats={playerStats}
+            />
+        </div>
+        <div className="flex-grow min-h-0">
+            {activeMobileView === 'main' && (
+                <GameArea
+                    cycles={cycles}
+                    cyclesPerClick={cyclesPerClick}
+                    cyclesPerSecond={cyclesPerSecond}
+                    onChipClick={handleChipClick}
+                    floatingNumbers={floatingNumbers}
+                    onAnimationEnd={handleAnimationEnd}
+                    activeBoosts={activeBoosts}
+                />
+            )}
+            {activeMobileView === 'buildings' && (
+                 <BuildingDisplay upgrades={upgrades} />
+            )}
+            {activeMobileView === 'upgrades' && (
+                 <UpgradeStore
+                    upgrades={upgrades}
+                    onPurchase={handlePurchaseUpgrade}
+                    cycles={cycles}
+                 />
+            )}
+        </div>
+      </main>
+      
+      <MobileNav activeView={activeMobileView} setView={setActiveMobileView} />
 
       <ParticleCanvas ref={particleCanvasRef} />
       

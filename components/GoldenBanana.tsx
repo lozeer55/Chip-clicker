@@ -32,7 +32,7 @@ const GoldenChip: React.FC<GoldenChipProps> = ({ goldenChip, onClick, onDisappea
     
     return (
         <div
-            className={`absolute z-40 drop-shadow-[0_0_15px_rgba(253,230,138,0.8)] ${getAnimationClass()}`}
+            className={`absolute z-40 drop-shadow-[0_0_15px_rgba(236,72,153,0.7)] ${getAnimationClass()}`}
             style={{
                 left: `${goldenChip.x}%`,
                 top: `${goldenChip.y}%`,
@@ -40,7 +40,7 @@ const GoldenChip: React.FC<GoldenChipProps> = ({ goldenChip, onClick, onDisappea
             }}
             onClick={goldenChip.status === 'visible' ? () => onClick(goldenChip.id) : undefined}
         >
-            <div className={`w-16 h-16 text-yellow-400 ${goldenChip.status === 'visible' ? 'animate-golden-bob cursor-pointer' : ''}`}>
+            <div className={`w-16 h-16 text-pink-400 ${goldenChip.status === 'visible' ? 'animate-golden-bob cursor-pointer' : ''}`}>
                  <GoldenChipIcon />
             </div>
         </div>

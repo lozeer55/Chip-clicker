@@ -52,18 +52,18 @@ const AchievementItem: React.FC<AchievementItemProps> = ({ achievement, isUnlock
   const showProgressBar = !isUnlocked && progress.percent > 0;
   
   return (
-    <li className={`flex items-center gap-4 p-4 rounded-lg border transition-all duration-300 ${isUnlocked ? 'bg-green-900/30 border-green-700/50 shadow-sm' : 'bg-slate-700/50 border-slate-600/80'}`}>
-      <div className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center ${isUnlocked ? 'bg-green-800/50 text-green-300' : 'bg-slate-600/80 text-slate-400'}`}>
+    <li className={`flex items-center gap-4 p-4 rounded-lg border transition-all duration-300 ${isUnlocked ? 'bg-pink-900/30 border-pink-700/50 shadow-sm' : 'bg-slate-700/50 border-slate-600/80'}`}>
+      <div className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center ${isUnlocked ? 'bg-pink-800/50 text-pink-300' : 'bg-slate-600/80 text-slate-400'}`}>
         {/* FIX: Removed type assertion. The `achievement.icon` type has been corrected in `types.ts` to be `React.ReactElement`, which resolves the `React.cloneElement` overload error. */}
         {React.cloneElement(achievement.icon, { className: 'h-8 w-8' })}
       </div>
       <div className="flex-grow">
-        <h4 className={`font-bold ${isUnlocked ? 'text-green-200' : 'text-slate-200'}`}>{achievement.name}</h4>
-        <p className={`text-sm ${isUnlocked ? 'text-green-300/90' : 'text-slate-400'}`}>{achievement.description}</p>
+        <h4 className={`font-bold ${isUnlocked ? 'text-pink-200' : 'text-slate-200'}`}>{achievement.name}</h4>
+        <p className={`text-sm ${isUnlocked ? 'text-pink-300/90' : 'text-slate-400'}`}>{achievement.description}</p>
         {showProgressBar && (
            <div className="mt-2">
                <div className="w-full bg-slate-600 rounded-full h-2.5">
-                   <div className="bg-green-500 h-2.5 rounded-full" style={{ width: `${progress.percent}%` }}></div>
+                   <div className="bg-pink-500 h-2.5 rounded-full" style={{ width: `${progress.percent}%` }}></div>
                </div>
                <p className="text-xs text-slate-400 text-right mt-1 font-mono">{progress.current.toLocaleString()} / {progress.target.toLocaleString()}</p>
            </div>

@@ -56,7 +56,7 @@ const SettingsToggle: React.FC<SettingsToggleProps> = ({ label, description, isE
           role="switch"
           aria-checked={isEnabled}
           onClick={onToggle}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 focus:ring-offset-slate-800 ${isEnabled ? 'bg-green-500' : 'bg-slate-500'}`}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-offset-2 focus:ring-offset-slate-800 ${isEnabled ? 'bg-pink-500' : 'bg-slate-500'}`}
           aria-label={label}
         >
           <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
@@ -128,7 +128,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
                   step="0.01"
                   value={settings.volume}
                   onChange={e => onSettingsChange({ volume: parseFloat(e.target.value) })}
-                  className="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-green-500"
+                  className="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer accent-pink-500"
                   disabled={!settings.soundEnabled}
                 />
               </div>
@@ -174,7 +174,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
                         <button
                             onClick={handleManualSaveClick}
                             disabled={saveStatus === 'saved'}
-                            className={`flex-1 text-sm font-bold py-2 px-3 rounded-lg shadow-sm transition-all duration-150 active:scale-95 text-white ${saveStatus === 'saved' ? 'bg-green-600 hover:bg-green-600 cursor-default' : 'bg-blue-600 hover:bg-blue-700'}`}
+                            className={`flex-1 text-sm font-bold py-2 px-3 rounded-lg shadow-sm transition-all duration-150 active:scale-95 text-white ${saveStatus === 'saved' ? 'bg-pink-600 hover:bg-pink-600 cursor-default' : 'bg-purple-600 hover:bg-purple-700'}`}
                         >
                             {saveStatus === 'saved' ? 'Saved!' : 'Save to Device'}
                         </button>

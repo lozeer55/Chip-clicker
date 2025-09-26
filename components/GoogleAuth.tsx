@@ -259,10 +259,10 @@ const GoogleAuth: React.FC<GoogleAuthProps> = ({ gameState, onLoadGame }) => {
 
         if (syncStatus === 'syncing') {
             text = "Syncing...";
-            color = "text-amber-400";
+            color = "text-purple-400";
         } else if (syncStatus === 'synced') {
             text = "Synced";
-            color = "text-green-400";
+            color = "text-pink-400";
         } else if (syncStatus === 'error') {
             text = "Sync Error";
             color = "text-red-400";
@@ -296,7 +296,7 @@ const GoogleAuth: React.FC<GoogleAuthProps> = ({ gameState, onLoadGame }) => {
                     <button 
                         onClick={handleSave} 
                         disabled={syncStatus === 'syncing'}
-                        className="flex-1 text-sm font-bold py-2 px-3 rounded-lg shadow-sm transition-all duration-150 active:scale-95 bg-green-600 hover:bg-green-700 text-white disabled:bg-slate-500 disabled:cursor-wait"
+                        className="flex-1 text-sm font-bold py-2 px-3 rounded-lg shadow-sm transition-all duration-150 active:scale-95 bg-pink-600 hover:bg-pink-700 text-white disabled:bg-slate-500 disabled:cursor-wait"
                     >
                         Save to Cloud
                     </button>

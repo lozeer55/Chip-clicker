@@ -15,7 +15,7 @@ const AchievementToast: React.FC<AchievementToastProps> = ({ name, icon, onClose
 
   return (
     <div
-      className="fixed top-5 left-1/2 -translate-x-1/2 z-50 w-full max-w-xs p-4 bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl shadow-2xl animate-slide-in-down"
+      className="fixed top-5 left-1/2 -translate-x-1/2 z-50 w-full max-w-xs p-4 bg-gradient-to-br from-purple-600 to-pink-500 text-white rounded-xl shadow-2xl animate-slide-in-down"
       role="alert"
     >
       <div className="flex items-center">

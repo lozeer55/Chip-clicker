@@ -16,8 +16,8 @@ const FloatingNumber: React.FC<FloatingNumberProps> = ({ value, x, y, onAnimatio
   }, [onAnimationEnd]);
 
   const textClass = isBoosted 
-    ? "text-orange-400 text-5xl font-extrabold"
-    : "text-yellow-400 text-4xl font-black";
+    ? "text-fuchsia-400 text-5xl font-extrabold"
+    : "text-pink-400 text-4xl font-black";
 
   return (
     <div

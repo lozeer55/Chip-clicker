@@ -133,12 +133,12 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
   return (
     <li className={`rounded-xl p-3 transition-all duration-200 bg-slate-800/60 hover:bg-slate-800/90 shadow-md hover:shadow-lg border border-slate-700/80 ${animationClass} ${isShaking ? 'animate-shake' : ''}`}>
       <div className="w-full flex items-center gap-4 text-left">
-        <div className="relative bg-amber-500/10 text-amber-400 p-3 rounded-lg flex-shrink-0">
+        <div className="relative bg-pink-500/10 text-pink-400 p-3 rounded-lg flex-shrink-0">
             {React.cloneElement(upgrade.icon, { className: 'h-10 w-10' })}
             {iconEffectKey && (
               <div
                 key={iconEffectKey}
-                className="absolute inset-0 flex items-center justify-center text-amber-400 animate-icon-purchase-effect pointer-events-none"
+                className="absolute inset-0 flex items-center justify-center text-pink-400 animate-icon-purchase-effect pointer-events-none"
               >
                  {React.cloneElement(upgrade.icon, { className: 'h-10 w-10' })}
               </div>
@@ -152,7 +152,7 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
             onMouseEnter={() => setIsCostHovered(true)}
             onMouseLeave={() => setIsCostHovered(false)}
           >
-            <div className={`text-base font-semibold text-amber-400 transition-all font-mono tracking-tight ${canAfford ? 'animate-cost-glow' : ''}`}>
+            <div className={`text-base font-semibold text-pink-400 transition-all font-mono tracking-tight ${canAfford ? 'animate-cost-glow' : ''}`}>
                 Cost: {totalCost.toLocaleString()}
             </div>
             <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-1 p-2 text-xs bg-slate-900 border border-slate-600 rounded-md text-slate-300 whitespace-nowrap transition-all duration-200 pointer-events-none ${isCostHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1'}`}>
@@ -176,7 +176,7 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
                     aria-label={`Purchase ${levelsToBuy} levels of ${upgrade.name}`}
                     className={`w-full text-base font-bold py-3 px-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 active:scale-95 text-center
                         ${canAfford 
-                            ? 'bg-green-600 hover:bg-green-700 text-white button-affordable-glow' 
+                            ? 'bg-pink-600 hover:bg-pink-700 text-white button-affordable-glow' 
                             : 'bg-slate-700 text-slate-500 cursor-not-allowed'
                         }`}
                     disabled={!canAfford || levelsToBuy <= 0}
@@ -263,7 +263,7 @@ const UpgradeStore: React.FC<UpgradeStoreProps> = ({ upgrades, onPurchase, cycle
 
     return (
       <div className={`mt-4 mb-2 p-2 rounded-lg bg-slate-700/50 border-b-2 border-slate-600/80 ${animationClass}`}>
-        <h4 className="text-lg font-bold text-amber-300">{tier.name}</h4>
+        <h4 className="text-lg font-bold text-pink-400">{tier.name}</h4>
       </div>
     );
   };
@@ -282,7 +282,7 @@ const UpgradeStore: React.FC<UpgradeStoreProps> = ({ upgrades, onPurchase, cycle
                     onClick={() => setBuyAmount(amount === 'max' ? 'max' : Number(amount))}
                     className={`px-3 py-1 text-sm font-bold rounded-md transition-colors flex-1 ${
                         String(buyAmount) === amount
-                            ? 'bg-amber-500 text-slate-900 shadow-sm'
+                            ? 'bg-pink-500 text-slate-900 shadow-sm'
                             : 'bg-transparent hover:bg-slate-700/60 text-slate-300'
                     }`}
                 >

@@ -11,7 +11,7 @@ const MilestoneTracker: React.FC<MilestoneTrackerProps> = ({ currentMilestone, p
   if (!currentMilestone) {
     return (
        <div className="w-full bg-slate-900/50 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-slate-700/80 flex items-center justify-center gap-4">
-            <div className="text-amber-300">
+            <div className="text-pink-300">
                 <TrophyIcon />
             </div>
             <div className="text-center">
@@ -28,7 +28,7 @@ const MilestoneTracker: React.FC<MilestoneTrackerProps> = ({ currentMilestone, p
     <div className="w-full bg-slate-900/50 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-slate-700/80">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-4 mb-2">
         <div className="flex items-center gap-3">
-          <div className="text-amber-300">
+          <div className="text-pink-400">
             <TrophyIcon />
           </div>
           <div className="text-center sm:text-left">
@@ -42,7 +42,7 @@ const MilestoneTracker: React.FC<MilestoneTrackerProps> = ({ currentMilestone, p
       </div>
       <div className="w-full bg-slate-700 rounded-full h-4 overflow-hidden border border-slate-600/80 mt-1">
         <div
-          className="bg-gradient-to-r from-yellow-400 to-amber-500 h-full rounded-full transition-all duration-300 ease-out"
+          className="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all duration-300 ease-out"
           style={{ width: `${progress}%` }}
         ></div>
       </div>
