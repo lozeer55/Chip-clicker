@@ -16,7 +16,7 @@ const MilestoneTracker: React.FC<MilestoneTrackerProps> = ({ currentMilestone, p
             </div>
             <div className="text-center">
                 <h3 className="font-bold text-slate-100 text-lg">All Milestones Achieved!</h3>
-                <p className="text-slate-400 text-sm">You are the ultimate Digital Deity!</p>
+                <p className="text-slate-400 text-sm">You are the ultimate Grand Alchemist!</p>
             </div>
         </div>
     );
@@ -33,7 +33,7 @@ const MilestoneTracker: React.FC<MilestoneTrackerProps> = ({ currentMilestone, p
           </div>
           <div className="text-center sm:text-left">
             <h3 className="font-semibold text-slate-100 text-lg leading-tight">Next: {currentMilestone.name}</h3>
-            <p className="text-slate-400 text-sm leading-tight">Reward: <span className="font-semibold">{currentMilestone.reward.multiplier}x {currentMilestone.reward.type === 'click_multiplier' ? 'clicks' : 'CPS'} for {currentMilestone.reward.duration}s</span></p>
+            <p className="text-slate-400 text-sm leading-tight">Reward: <span className="font-semibold">{currentMilestone.reward.multiplier}x {currentMilestone.reward.type === 'click_multiplier' ? 'stirs' : 'EPS'} for {currentMilestone.reward.duration}s</span></p>
           </div>
         </div>
         <div className="text-center sm:text-right">

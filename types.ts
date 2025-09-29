@@ -74,6 +74,9 @@ export interface PlayerStats {
   totalClicks: number;
   totalCyclesEarned: number;
   xp: number;
+  totalPrestigePointsEver: number;
+  totalPrestiges: number;
+  goldenDropletsClicked: number;
 }
 
 export type AchievementCondition = 
@@ -99,11 +102,27 @@ export interface AchievementToastInfo {
   icon: React.ReactElement<{ className?: string }>;
 }
 
-export interface GoldenChipType {
+export interface GoldenDropletType {
   id: number;
   x: number; // percentage
   y: number; // percentage
   status: 'visible' | 'clicked' | 'missed';
+}
+
+export type PrestigeBonus = 
+    | { type: 'all_cycles_multiplier'; value: number }
+    | { type: 'starting_cycles'; value: number }
+    | { type: 'cps_to_click_synergy'; value: number };
+
+export interface PrestigeUpgrade {
+  id: string;
+  name: string;
+  description: (level: number) => string;
+  cost: (level: number) => number;
+  level: number;
+  maxLevel?: number;
+  bonus: PrestigeBonus;
+  icon: React.ReactElement<{ className?: string }>;
 }
 
 export type SaveState = {
@@ -112,6 +131,59 @@ export type SaveState = {
     milestoneIndex: number;
     stats: PlayerStats;
     unlockedAchievements: string[];
+    prestigePoints: number;
+    prestigeUpgrades: { id: string, level: number }[];
+    lastLoginDate?: string;
+    loginStreak?: number;
+    completedChallenges: string[];
 };
 
 export type MobileView = 'main' | 'upgrades' | 'buildings';
+
+export type DailyReward = {
+    day: number;
+    type: 'essence_minutes' | 'prestige_points' | 'click_boost' | 'bps_boost';
+    value: number;
+    duration?: number;
+    icon: React.ReactElement<{ className?: string }>;
+    name: string;
+};
+
+// New types for Challenges
+export interface ChallengeObjective {
+  type: 'earn_essence' | 'upgrade_level';
+  value: number;
+  upgradeId?: string;
+}
+
+export interface ChallengeReward {
+  type: 'prestige_points';
+  value: number;
+}
+
+export interface Challenge {
+  id: string;
+  name: string;
+  description: string;
+  duration: number; // in seconds
+  objective: ChallengeObjective;
+  reward: ChallengeReward;
+  icon: React.ReactElement<{ className?: string }>;
+  unlockCondition: {
+    type: 'prestiges';
+    value: number;
+  };
+}
+
+export interface ActiveChallengeState {
+    challenge: Challenge;
+    startTime: number;
+    initialValue: number; // e.g., essence at start, or level at start
+}
+
+export interface ChallengeToastInfo {
+  id: number;
+  name: string;
+  status: 'success' | 'failure';
+  rewardDescription?: string;
+}

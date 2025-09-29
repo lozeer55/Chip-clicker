@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import type { Upgrade, UpgradeTier } from '../types';
-import { UPGRADE_TIERS, LockIcon } from '../constants';
+import type { Upgrade, UpgradeTier, PrestigeUpgrade } from '../types';
+import { UPGRADE_TIERS, LockIcon, StarIcon } from '../constants';
 
 interface UpgradeItemProps {
   upgrade: Upgrade;
@@ -62,6 +62,7 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
   }, [buyAmount, cycles, upgrade.level, calculateCost, maxLevelsToBuy, isLocked]);
   
   const singleLevelCost = useMemo(() => calculateCost(upgrade.level, 1), [upgrade.level, calculateCost]);
+  const isAffordableForOne = !isLocked && cycles >= singleLevelCost;
   
   const [animationClass, setAnimationClass] = useState('');
   const [isShaking, setIsShaking] = useState(false);
@@ -131,17 +132,15 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
   }
 
   return (
-    <li className={`rounded-xl p-3 transition-all duration-200 bg-slate-800/60 hover:bg-slate-800/90 shadow-md hover:shadow-lg border border-slate-700/80 ${animationClass} ${isShaking ? 'animate-shake' : ''}`}>
+    <li className={`rounded-xl p-3 transition-all duration-200 bg-slate-800/60 hover:bg-slate-800/90 shadow-md hover:shadow-lg border ${animationClass} ${isShaking ? 'animate-shake' : ''} ${isAffordableForOne ? 'upgrade-affordable-glow' : 'border-slate-700/80'}`}>
       <div className="w-full flex items-center gap-4 text-left">
-        <div className="relative bg-pink-500/10 text-pink-400 p-3 rounded-lg flex-shrink-0">
+        <div className="relative bg-pink-500/10 text-pink-400 p-3 rounded-lg flex-shrink-0 overflow-hidden">
             {React.cloneElement(upgrade.icon, { className: 'h-10 w-10' })}
             {iconEffectKey && (
               <div
                 key={iconEffectKey}
-                className="absolute inset-0 flex items-center justify-center text-pink-400 animate-icon-purchase-effect pointer-events-none"
-              >
-                 {React.cloneElement(upgrade.icon, { className: 'h-10 w-10' })}
-              </div>
+                className="absolute inset-0 animate-shine-wipe pointer-events-none"
+              />
             )}
         </div>
         <div className="flex-grow min-w-0">
@@ -181,7 +180,7 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
                         }`}
                     disabled={!canAfford || levelsToBuy <= 0}
                 >
-                    Build <span className="font-mono">{buyAmount === 'max' ? levelsToBuy : buyAmount}x</span>
+                    Elaborar <span className="font-mono">{buyAmount === 'max' ? levelsToBuy : buyAmount}x</span>
                 </button>
              </div>
         </div>
@@ -190,14 +189,73 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
   );
 };
 
+interface PrestigeUpgradeItemProps {
+    upgrade: PrestigeUpgrade;
+    onPurchase: (id: string) => void;
+    prestigePoints: number;
+}
+
+const PrestigeUpgradeItem: React.FC<PrestigeUpgradeItemProps> = ({ upgrade, onPurchase, prestigePoints }) => {
+    const cost = upgrade.cost(upgrade.level);
+    const canAfford = prestigePoints >= cost;
+    const isMaxLevel = upgrade.maxLevel !== undefined && upgrade.level >= upgrade.maxLevel;
+
+    const handlePurchase = () => {
+        if (canAfford && !isMaxLevel) {
+            onPurchase(upgrade.id);
+        }
+    };
+
+    return (
+        <li className={`rounded-xl p-3 transition-all duration-200 bg-purple-900/40 hover:bg-purple-900/60 shadow-md hover:shadow-lg border ${canAfford && !isMaxLevel ? 'upgrade-affordable-glow border-purple-400/50' : 'border-purple-800/80'}`}>
+            <div className="w-full flex items-center gap-4 text-left">
+                <div className="bg-purple-500/10 text-purple-300 p-3 rounded-lg flex-shrink-0">
+                    {React.cloneElement(upgrade.icon, { className: 'h-10 w-10' })}
+                </div>
+                <div className="flex-grow min-w-0">
+                    <h4 className="font-semibold text-lg text-slate-100 truncate">{upgrade.name}</h4>
+                    <p className="text-sm text-slate-400">{upgrade.description(upgrade.level)}</p>
+                    <div className="text-base font-semibold text-purple-300 font-mono tracking-tight mt-1">
+                        Cost: {isMaxLevel ? "MAX" : `${cost.toLocaleString()} PP`}
+                    </div>
+                </div>
+                <div className="text-right flex items-center gap-4 flex-shrink-0">
+                    <div className="flex items-baseline gap-1">
+                        <span className="text-sm text-slate-400 font-medium">LVL</span>
+                        <span className="text-3xl font-bold text-slate-200 font-mono">
+                            {upgrade.level}{upgrade.maxLevel ? `/${upgrade.maxLevel}` : ''}
+                        </span>
+                    </div>
+                    <div className="w-[120px]">
+                        <button 
+                            onClick={handlePurchase}
+                            disabled={!canAfford || isMaxLevel}
+                            className={`w-full text-base font-bold py-3 px-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 active:scale-95 text-center
+                                ${canAfford && !isMaxLevel
+                                    ? 'bg-purple-600 hover:bg-purple-700 text-white button-affordable-glow'
+                                    : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                }`}
+                        >
+                            {isMaxLevel ? "Maxed" : "Purchase"}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </li>
+    );
+};
 
 interface UpgradeStoreProps {
   upgrades: Upgrade[];
   onPurchase: (id: string, levels: number) => void;
   cycles: number;
+  prestigePoints: number;
+  prestigeUpgrades: PrestigeUpgrade[];
+  onPurchasePrestige: (id: string) => void;
 }
 
-const UpgradeStore: React.FC<UpgradeStoreProps> = ({ upgrades, onPurchase, cycles }) => {
+const UpgradeStore: React.FC<UpgradeStoreProps> = ({ upgrades, onPurchase, cycles, prestigePoints, prestigeUpgrades, onPurchasePrestige }) => {
+  const [activeTab, setActiveTab] = useState<'standard' | 'prestige'>('standard');
   const totalLevels = useMemo(() => upgrades.reduce((sum, u) => sum + u.level, 0), [upgrades]);
   const [unlockedTiers, setUnlockedTiers] = useState<Set<string>>(() => {
     const initialTotalLevels = upgrades.reduce((sum, u) => sum + u.level, 0);
@@ -270,59 +328,91 @@ const UpgradeStore: React.FC<UpgradeStoreProps> = ({ upgrades, onPurchase, cycle
 
   return (
     <div className="bg-slate-900/50 rounded-2xl shadow-inner border border-slate-700/50 p-4 h-full flex flex-col">
-      <h3 className="text-4xl font-extrabold text-center mb-4 text-slate-100 flex-shrink-0">
-        Store
-      </h3>
-       <div className="flex-shrink-0 mb-3 flex items-center justify-center gap-2">
-        <span className="text-sm font-semibold text-slate-400">Build:</span>
-        <div className="flex flex-1 gap-1 p-1 bg-slate-800/80 rounded-lg max-w-sm">
-            {(['1', '10', '100', 'max'] as const).map((amount) => (
-                <button
-                    key={amount}
-                    onClick={() => setBuyAmount(amount === 'max' ? 'max' : Number(amount))}
-                    className={`px-3 py-1 text-sm font-bold rounded-md transition-colors flex-1 ${
-                        String(buyAmount) === amount
-                            ? 'bg-pink-500 text-slate-900 shadow-sm'
-                            : 'bg-transparent hover:bg-slate-700/60 text-slate-300'
-                    }`}
-                >
-                    {amount === 'max' ? 'Max' : <span className="font-mono">{amount}x</span>}
-                </button>
-            ))}
+      <div className="flex-shrink-0 mb-4">
+        <div className="flex items-center justify-between">
+            <div className="text-left">
+                <div className="flex items-center gap-2 font-bold text-purple-300">
+                  <StarIcon className="h-5 w-5"/>
+                  <span className="text-xl font-mono">{prestigePoints.toLocaleString()}</span>
+                </div>
+                <span className="text-xs text-slate-400">Prestige Points</span>
+            </div>
+            <h3 className="text-4xl font-extrabold text-slate-100">Store</h3>
+        </div>
+        <div className="mt-4 border-b border-slate-700 flex">
+            <button onClick={() => setActiveTab('standard')} className={`px-4 py-2 text-sm font-bold transition-colors ${activeTab === 'standard' ? 'text-pink-400 border-b-2 border-pink-400' : 'text-slate-400 hover:text-slate-200'}`}>Standard</button>
+            <button onClick={() => setActiveTab('prestige')} className={`px-4 py-2 text-sm font-bold transition-colors ${activeTab === 'prestige' ? 'text-purple-400 border-b-2 border-purple-400' : 'text-slate-400 hover:text-slate-200'}`}>Prestige</button>
         </div>
       </div>
-      <ul className="space-y-3 flex-grow overflow-y-auto pr-2 -mr-2">
-        {UPGRADE_TIERS.map((tier) => {
-            const isTierUnlocked = unlockedTiers.has(tier.name);
-            const unlockMessage = getUnlockMessage(tier);
-            const isNewlyUnlocked = newlyUnlockedRef.current.has(tier.name);
 
-            return (
-              <React.Fragment key={tier.name}>
-                {isTierUnlocked && <TierHeader tier={tier} isNewlyUnlocked={isNewlyUnlocked} />}
-                {tier.upgrades.map(upgradeStub => {
-                    const upgrade = isTierUnlocked 
-                        ? upgrades.find(u => u.id === upgradeStub.id) 
-                        : upgradeStub;
-                    
-                    if (!upgrade) return null; // Should not happen with correct data
+      {activeTab === 'standard' && (
+        <>
+          <div className="flex-shrink-0 mb-3 flex items-center justify-center gap-2">
+            <span className="text-sm font-semibold text-slate-400">Elaborar:</span>
+            <div className="flex flex-1 gap-1 p-1 bg-slate-800/80 rounded-lg max-w-sm">
+                {(['1', '10', '100', 'max'] as const).map((amount) => (
+                    <button
+                        key={amount}
+                        onClick={() => setBuyAmount(amount === 'max' ? 'max' : Number(amount))}
+                        className={`px-3 py-1 text-sm font-bold rounded-md transition-colors flex-1 ${
+                            String(buyAmount) === amount
+                                ? 'bg-pink-500 text-slate-900 shadow-sm'
+                                : 'bg-transparent hover:bg-slate-700/60 text-slate-300'
+                        }`}
+                    >
+                        {amount === 'max' ? 'Max' : <span className="font-mono">{amount}x</span>}
+                    </button>
+                ))}
+            </div>
+          </div>
+          <ul className="space-y-3 flex-grow overflow-y-auto pr-2 -mr-2">
+            {UPGRADE_TIERS.map((tier) => {
+                const isTierUnlocked = unlockedTiers.has(tier.name);
+                const unlockMessage = getUnlockMessage(tier);
+                const isNewlyUnlocked = newlyUnlockedRef.current.has(tier.name);
 
-                    return (
-                        <UpgradeItem
-                            key={upgrade.id}
-                            upgrade={upgrade}
-                            onPurchase={onPurchase}
-                            cycles={cycles}
-                            buyAmount={buyAmount}
-                            isLocked={!isTierUnlocked}
-                            unlockMessage={unlockMessage}
-                        />
-                    );
-                })}
-              </React.Fragment>
-            );
-        })}
-      </ul>
+                return (
+                  <React.Fragment key={tier.name}>
+                    {isTierUnlocked && <TierHeader tier={tier} isNewlyUnlocked={isNewlyUnlocked} />}
+                    {tier.upgrades.map(upgradeStub => {
+                        const upgrade = isTierUnlocked 
+                            ? upgrades.find(u => u.id === upgradeStub.id) 
+                            : upgradeStub;
+                        
+                        if (!upgrade) return null;
+
+                        return (
+                            <UpgradeItem
+                                key={upgrade.id}
+                                upgrade={upgrade}
+                                onPurchase={onPurchase}
+                                cycles={cycles}
+                                buyAmount={buyAmount}
+                                isLocked={!isTierUnlocked}
+                                unlockMessage={unlockMessage}
+                            />
+                        );
+                    })}
+                  </React.Fragment>
+                );
+            })}
+          </ul>
+        </>
+      )}
+
+      {activeTab === 'prestige' && (
+        <ul className="space-y-3 flex-grow overflow-y-auto pr-2 -mr-2">
+            <p className="text-sm text-slate-400 p-2 text-center bg-slate-800/50 rounded-md mb-2">These upgrades are permanent and persist through prestiging.</p>
+            {prestigeUpgrades.map(upgrade => (
+                <PrestigeUpgradeItem
+                    key={upgrade.id}
+                    upgrade={upgrade}
+                    onPurchase={onPurchasePrestige}
+                    prestigePoints={prestigePoints}
+                />
+            ))}
+        </ul>
+      )}
     </div>
   );
 };

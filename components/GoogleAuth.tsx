@@ -8,7 +8,7 @@ const API_KEY = process.env.API_KEY;
 
 const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
 const SCOPES = 'https://www.googleapis.com/auth/drive.appdata';
-const SAVE_FILE_NAME = 'chip_clicker_save.json';
+const SAVE_FILE_NAME = 'elixir_clicker_save.json';
 
 interface GoogleAuthProps {
     gameState: SaveState;

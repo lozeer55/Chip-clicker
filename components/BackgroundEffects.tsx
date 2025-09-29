@@ -1,14 +1,11 @@
 import React, { useMemo } from 'react';
 
-// A simple, stylized circuit board icon
-const CircuitIcon = () => (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-green-500">
-      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-      <path d="M9 9h6v6H9z"></path>
-      <path d="M9 1v2"></path><path d="M15 1v2"></path>
-      <path d="M9 21v2"></path><path d="M15 21v2"></path>
-      <path d="M1 9h2"></path><path d="M1 15h2"></path>
-      <path d="M21 9h2"></path><path d="M21 15h2"></path>
+// A simple, stylized rune icon
+const RuneIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-full h-full text-pink-500">
+      <path d="M12 3v18"></path>
+      <path d="m18 16-6-4-6 4"></path>
+      <path d="m18 8-6 4-6-4"></path>
     </svg>
 );
 
@@ -50,7 +47,7 @@ const BackgroundEffects: React.FC = () => {
                         opacity: particle.opacity,
                     }}
                 >
-                    <CircuitIcon />
+                    <RuneIcon />
                 </div>
             ))}
         </div>

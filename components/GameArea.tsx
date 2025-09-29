@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { FloatingNumberType, ActiveBoost } from '../types';
 import FloatingNumber from './FloatingNumber';
 import { LightningIcon } from '../constants';
@@ -13,7 +13,7 @@ interface GameAreaProps {
   activeBoosts: ActiveBoost[];
 }
 
-const ChipSVG: React.FC<{ onClick: (e: React.MouseEvent<HTMLElement>) => void; isBoostActive: boolean }> = ({ onClick, isBoostActive }) => {
+const PotionFlaskSVG: React.FC<{ onClick: (e: React.MouseEvent<HTMLElement>) => void; isBoostActive: boolean }> = ({ onClick, isBoostActive }) => {
     const [animationClass, setAnimationClass] = useState('');
 
     const handleClick = (e: React.MouseEvent<HTMLElement>) => {
@@ -25,7 +25,7 @@ const ChipSVG: React.FC<{ onClick: (e: React.MouseEvent<HTMLElement>) => void; i
     <div
         className={`relative w-48 h-48 sm:w-64 sm:h-64 lg:w-full lg:h-auto lg:max-w-xs cursor-pointer animate-pulse-subtle ${isBoostActive ? 'animate-boost-glow' : ''}`}
         onClick={handleClick}
-        aria-label="Click to generate cycles"
+        aria-label="Click to generate essence"
     >
         <svg 
             viewBox="0 0 256 256" 
@@ -34,28 +34,38 @@ const ChipSVG: React.FC<{ onClick: (e: React.MouseEvent<HTMLElement>) => void; i
             className={`w-full h-full drop-shadow-[0_10px_8px_rgba(0,0,0,0.25)] hover:drop-shadow-[0_15px_15px_rgba(0,0,0,0.3)] ${animationClass}`}
         >
             <defs>
-                <radialGradient id="chipGlow" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-                    <stop offset="0%" style={{stopColor: '#f472b6', stopOpacity: 0.6}} />
-                    <stop offset="100%" style={{stopColor: '#d946ef', stopOpacity: 0}} />
+                <radialGradient id="liquidGlow" cx="50%" cy="70%" r="50%" fx="50%" fy="70%">
+                    <stop offset="0%" style={{stopColor: '#f472b6', stopOpacity: 1}} />
+                    <stop offset="100%" style={{stopColor: '#a855f7', stopOpacity: 1}} />
                 </radialGradient>
+                 <linearGradient id="glassReflection" x1="0.2" y1="0.2" x2="0.8" y2="0.8">
+                    <stop offset="0%" stopColor="white" stopOpacity="0.6"/>
+                    <stop offset="100%" stopColor="white" stopOpacity="0.1"/>
+                </linearGradient>
             </defs>
-            <rect width="256" height="256" fill="none"/>
-            <rect x="40" y="40" width="176" height="176" rx="8" stroke="#94a3b8" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" fill="#1e293b"/>
-            <rect x="88" y="88" width="80" height="80" stroke="#a855f7" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" fill="#334155"/>
-            <rect x="88" y="88" width="80" height="80" fill="url(#chipGlow)" />
-            <line x1="168" y1="56" x2="200" y2="56" fill="none" stroke="#94a3b8" strokeLinecap="round" strokeLinejoin="round" strokeWidth="12"/>
-            <line x1="168" y1="88" x2="200" y2="88" fill="none" stroke="#94a3b8" strokeLinecap="round" strokeLinejoin="round" strokeWidth="12"/>
-            <line x1="168" y1="120" x2="200" y2="120" fill="none" stroke="#94a3b8" strokeLinecap="round" strokeLinejoin="round" strokeWidth="12"/>
-            <line x1="168" y1="152" x2="200" y2="152" fill="none" stroke="#94a3b8" strokeLinecap="round" strokeLinejoin="round" strokeWidth="12"/>
-            <line x1="168" y1="184" x2="200" y2="184" fill="none" stroke="#94a3b8" strokeLinecap="round" strokeLinejoin="round" strokeWidth="12"/>
-            <line x1="56" y1="88" x2="88" y2="88" fill="none" stroke="#94a3b8" strokeLinecap="round" strokeLinejoin="round" strokeWidth="12"/>
-            <line x1="56" y1="120" x2="88" y2="120" fill="none" stroke="#94a3b8" strokeLinecap="round" strokeLinejoin="round" strokeWidth="12"/>
-            <line x1="56" y1="152" x2="88" y2="152" fill="none" stroke="#94a3b8" strokeLinecap="round" strokeLinejoin="round" strokeWidth="12"/>
-            <line x1="56" y1="184" x2="88" y2="184" fill="none" stroke="#94a3b8" strokeLinecap="round" strokeLinejoin="round" strokeWidth="12"/>
-            <line x1="56" y1="56" x2="88" y2="56" fill="none" stroke="#94a3b8" strokeLinecap="round" strokeLinejoin="round" strokeWidth="12"/>
+            
+            <g>
+                {/* Liquid */}
+                <path d="M192,112.9V208a8,8,0,0,1-8,8H72a8,8,0,0,1-8-8V112.9a64,64,0,1,1,128,0Z" fill="url(#liquidGlow)" />
+                {/* Liquid surface */}
+                <path d="M 68 115 C 90 100, 166 100, 188 115" stroke="#f472b6" strokeWidth="4" fill="transparent" />
+                
+                {/* Glass */}
+                <path d="M192,112.9V216a8,8,0,0,1-8,8H72a8,8,0,0,1-8-8V112.9a64,64,0,1,1,128,0Z" fill="white" fillOpacity="0.2" stroke="white" strokeOpacity="0.7" strokeWidth="8"/>
+                
+                {/* Neck */}
+                <line x1="128" y1="32" x2="128" y2="64" fill="none" stroke="white" strokeOpacity="0.7" strokeWidth="8" strokeLinecap="round"/>
+                
+                {/* Stopper */}
+                <rect x="96" y="24" width="64" height="24" rx="4" fill="#a16207" stroke="#78350f" strokeWidth="4" />
+                
+                {/* Highlight */}
+                <path d="M160 120 A 50 80 0 0 1 140 200" fill="none" stroke="url(#glassReflection)" strokeWidth="12" strokeLinecap="round" />
+            </g>
         </svg>
     </div>
 )};
+
 
 const ActiveBoostItem: React.FC<{ boost: ActiveBoost }> = ({ boost }) => {
     const [timeLeft, setTimeLeft] = useState(0);
@@ -71,7 +81,7 @@ const ActiveBoostItem: React.FC<{ boost: ActiveBoost }> = ({ boost }) => {
     }, [boost.endTime]);
 
     const getBoostTitle = () => {
-        if (boost.source === 'Golden Chip!') return 'Overclock!';
+        if (boost.source === 'Golden Droplet!') return 'Overclock!';
         if (boost.source.startsWith('Milestone')) return boost.type === 'click_multiplier' ? 'Click Frenzy!' : 'Processing Rush!';
         return 'Boost Active!';
     };
@@ -86,7 +96,7 @@ const ActiveBoostItem: React.FC<{ boost: ActiveBoost }> = ({ boost }) => {
                     <div>
                         <h4 className="font-bold text-pink-300 text-sm leading-tight">{getBoostTitle()}</h4>
                         <p className="text-xs text-pink-400 leading-tight">
-                            {boost.multiplier}x {boost.type === 'click_multiplier' ? 'Clicks' : 'CPS'}
+                            {boost.multiplier}x {boost.type === 'click_multiplier' ? 'Stirs' : 'EPS'}
                         </p>
                     </div>
                 </div>
@@ -106,32 +116,33 @@ const GameArea: React.FC<GameAreaProps> = ({
   onAnimationEnd,
   activeBoosts,
 }) => {
-  const isBoostActive = activeBoosts.length > 0;
+  const isClickBoostActive = useMemo(() => activeBoosts.some(b => b.type === 'click_multiplier'), [activeBoosts]);
+  const isCpsBoostActive = useMemo(() => activeBoosts.some(b => b.type === 'bps_multiplier'), [activeBoosts]);
 
   return (
     <div className="bg-slate-900/50 rounded-2xl shadow-inner border border-slate-700/50 p-4 sm:p-6 flex flex-col items-center justify-between gap-4 h-full">
         {/* Top Section */}
         <div className="text-center w-full flex-shrink-0">
             <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-100 tracking-tight hidden lg:block">
-                Chip Clicker
+                Elixir Clicker
             </h1>
             <div className="mt-2">
                 <h2 className="text-5xl sm:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-pink-400 to-purple-400 tracking-tighter font-mono" style={{textShadow: '0 0 15px rgba(219, 39, 119, 0.4)'}}>
                     {Math.floor(cycles).toLocaleString()}
                 </h2>
-                <p className="text-slate-400 font-medium text-lg tracking-wide">cycles</p>
+                <p className="text-slate-400 font-medium text-lg tracking-wide">esencia</p>
             </div>
         </div>
 
         {/* Middle Section with Boost and Clicker */}
         <div className="relative flex-grow flex flex-col items-center justify-center w-full">
-            {isBoostActive && (
+            {activeBoosts.length > 0 && (
                 <div className="w-full max-w-sm mb-2 space-y-1">
                     {activeBoosts.map(boost => <ActiveBoostItem key={boost.id} boost={boost} />)}
                 </div>
             )}
             <div className="relative">
-                <ChipSVG onClick={onChipClick} isBoostActive={isBoostActive} />
+                <PotionFlaskSVG onClick={onChipClick} isBoostActive={isClickBoostActive} />
                 {floatingNumbers.map((num) => (
                 <FloatingNumber
                     key={num.id}
@@ -148,12 +159,16 @@ const GameArea: React.FC<GameAreaProps> = ({
         {/* Bottom Section with Stats */}
         <div className="grid grid-cols-2 gap-4 w-full max-w-sm mx-auto flex-shrink-0">
             <div className="bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-center">
-                <p className="text-sm font-medium text-slate-400">per Click</p>
-                <strong className="text-2xl font-bold text-slate-100 tracking-tight font-mono">{cyclesPerClick.toLocaleString()}</strong>
+                <p className="text-sm font-medium text-slate-400">por Agitación</p>
+                <strong className={`text-2xl font-bold text-slate-100 tracking-tight font-mono transition-all ${isClickBoostActive ? 'animate-cps-boost-glow' : ''}`}>
+                    {cyclesPerClick.toLocaleString()}
+                </strong>
             </div>
             <div className="bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-center">
-                <p className="text-sm font-medium text-slate-400">per Second</p>
-                <strong className="text-2xl font-bold text-slate-100 tracking-tight font-mono">{cyclesPerSecond.toLocaleString()}</strong>
+                <p className="text-sm font-medium text-slate-400">por Segundo</p>
+                <strong className={`text-2xl font-bold text-slate-100 tracking-tight font-mono transition-all ${isCpsBoostActive ? 'animate-cps-boost-glow' : ''}`}>
+                    {cyclesPerSecond.toLocaleString()}
+                </strong>
             </div>
         </div>
     </div>

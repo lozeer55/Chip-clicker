@@ -4,19 +4,24 @@ import UpgradeStore from './components/UpgradeStore';
 import ParticleCanvas, { ParticleCanvasHandle } from './components/ParticleCanvas';
 import SettingsModal from './components/SettingsModal';
 import AchievementsModal from './components/AchievementsModal';
+import StatsModal from './components/StatsModal';
 import BackgroundEffects from './components/BackgroundEffects';
 import MilestoneTracker from './components/MilestoneTracker';
 import MilestoneToast from './components/MilestoneToast';
 import AchievementToast from './components/AchievementToast';
 import BuildingDisplay from './components/BuildingDisplay';
-import GoldenChip from './components/GoldenBanana';
-import MobileNav from './components/MobileNav'; // Import the new component
-import type { Upgrade, FloatingNumberType, GameSettings, PlayerStats, Achievement, ActiveBoost, MilestoneToastInfo, AchievementToastInfo, GoldenChipType, SaveState, MobileView } from './types';
-import { INITIAL_UPGRADES, SettingsIcon, MILESTONES, ACHIEVEMENTS, AchievementIcon, GOLDEN_CHIP_LIFESPAN, GOLDEN_CHIP_SPAWN_INTERVAL_MIN, GOLDEN_CHIP_SPAWN_INTERVAL_MAX, GOLDEN_CHIP_BOOST_MULTIPLIER, GOLDEN_CHIP_BOOST_DURATION } from './constants';
+import GoldenDroplet from './components/GoldenBanana';
+import MobileNav from './components/MobileNav';
+import DailyRewardModal from './components/DailyRewardModal';
+import ChallengesModal from './components/ChallengesModal';
+import ChallengeTracker from './components/ChallengeTracker';
+import ChallengeToast from './components/ChallengeToast';
+import type { Upgrade, FloatingNumberType, GameSettings, PlayerStats, Achievement, ActiveBoost, MilestoneToastInfo, AchievementToastInfo, GoldenDropletType, SaveState, MobileView, PrestigeUpgrade, Challenge, ActiveChallengeState, ChallengeToastInfo } from './types';
+import { INITIAL_UPGRADES, SettingsIcon, MILESTONES, ACHIEVEMENTS, AchievementIcon, ChartBarIcon, GOLDEN_DROPLET_LIFESPAN, GOLDEN_DROPLET_SPAWN_INTERVAL_MIN, GOLDEN_DROPLET_SPAWN_INTERVAL_MAX, GOLDEN_DROPLET_BOOST_MULTIPLIER, GOLDEN_DROPLET_BOOST_DURATION, INITIAL_PRESTIGE_UPGRADES, calculatePrestigePoints, DAILY_REWARDS, CHALLENGES, StopwatchIcon } from './constants';
 import { backgroundMusic, clickSound, milestoneSound, purchaseSound, achievementSound, goldenChipSpawnSound, goldenChipClickSound } from './sounds';
 
-const SAVE_KEY = 'chipClickerSave';
-const SETTINGS_KEY = 'chipClickerSettings';
+const SAVE_KEY = 'elixirClickerSave';
+const SETTINGS_KEY = 'elixirClickerSettings';
 
 // Load game state from localStorage
 const loadGame = (): { 
@@ -25,22 +30,35 @@ const loadGame = (): {
     initialMilestoneIndex: number;
     initialStats: PlayerStats;
     initialUnlockedAchievements: Set<string>;
+    initialCompletedChallenges: Set<string>;
+    initialPrestigePoints: number;
+    initialPrestigeUpgrades: PrestigeUpgrade[];
+    initialLoginStreak: number;
+    initialLastLoginDate: string | null;
 } => {
   try {
     const savedData = localStorage.getItem(SAVE_KEY);
     if (savedData) {
-      const { cycles, upgrades: savedUpgrades, milestoneIndex, stats, unlockedAchievements } = JSON.parse(savedData);
+      const { cycles, upgrades: savedUpgrades, milestoneIndex, stats, unlockedAchievements, completedChallenges, prestigePoints, prestigeUpgrades: savedPrestigeUpgrades, loginStreak, lastLoginDate } = JSON.parse(savedData);
       
       const mergedUpgrades = INITIAL_UPGRADES.map(initialUpgrade => {
         const savedUpgrade = savedUpgrades.find((u: { id: string, level: number }) => u.id === initialUpgrade.id);
         return savedUpgrade ? { ...initialUpgrade, level: savedUpgrade.level } : initialUpgrade;
       });
+      
+      const mergedPrestigeUpgrades = INITIAL_PRESTIGE_UPGRADES.map(initialUpgrade => {
+        const savedUpgrade = savedPrestigeUpgrades?.find((u: { id: string, level: number }) => u.id === initialUpgrade.id);
+        return savedUpgrade ? { ...initialUpgrade, level: savedUpgrade.level } : initialUpgrade;
+      });
 
-      const defaultStats = { totalClicks: 0, totalCyclesEarned: 0, xp: 0 };
+      const defaultStats: PlayerStats = { totalClicks: 0, totalCyclesEarned: 0, xp: 0, totalPrestigePointsEver: 0, totalPrestiges: 0, goldenDropletsClicked: 0 };
       const loadedStats = {
           totalClicks: stats?.totalClicks || 0,
           totalCyclesEarned: stats?.totalCyclesEarned || 0,
           xp: stats?.xp || 0,
+          totalPrestigePointsEver: stats?.totalPrestigePointsEver || 0,
+          totalPrestiges: stats?.totalPrestiges || 0,
+          goldenDropletsClicked: stats?.goldenDropletsClicked || 0,
       };
 
       return { 
@@ -49,6 +67,11 @@ const loadGame = (): {
         initialMilestoneIndex: milestoneIndex || 0,
         initialStats: { ...defaultStats, ...loadedStats },
         initialUnlockedAchievements: new Set(unlockedAchievements || []),
+        initialCompletedChallenges: new Set(completedChallenges || []),
+        initialPrestigePoints: prestigePoints || 0,
+        initialPrestigeUpgrades: mergedPrestigeUpgrades || INITIAL_PRESTIGE_UPGRADES,
+        initialLoginStreak: loginStreak || 0,
+        initialLastLoginDate: lastLoginDate || null,
       };
     }
   } catch (error) {
@@ -58,8 +81,13 @@ const loadGame = (): {
       initialCycles: 0, 
       initialUpgrades: INITIAL_UPGRADES, 
       initialMilestoneIndex: 0,
-      initialStats: { totalClicks: 0, totalCyclesEarned: 0, xp: 0 },
+      initialStats: { totalClicks: 0, totalCyclesEarned: 0, xp: 0, totalPrestigePointsEver: 0, totalPrestiges: 0, goldenDropletsClicked: 0 },
       initialUnlockedAchievements: new Set(),
+      initialCompletedChallenges: new Set(),
+      initialPrestigePoints: 0,
+      initialPrestigeUpgrades: INITIAL_PRESTIGE_UPGRADES,
+      initialLoginStreak: 0,
+      initialLastLoginDate: null,
   };
 };
 
@@ -95,7 +123,7 @@ const loadSettings = (): GameSettings => {
 
 
 const App: React.FC = () => {
-  const { initialCycles, initialUpgrades, initialMilestoneIndex, initialStats, initialUnlockedAchievements } = useMemo(() => loadGame(), []);
+  const { initialCycles, initialUpgrades, initialMilestoneIndex, initialStats, initialUnlockedAchievements, initialCompletedChallenges, initialPrestigePoints, initialPrestigeUpgrades, initialLoginStreak, initialLastLoginDate } = useMemo(() => loadGame(), []);
   
   const [cycles, setCycles] = useState<number>(initialCycles);
   const [upgrades, setUpgrades] = useState<Upgrade[]>(initialUpgrades);
@@ -103,18 +131,29 @@ const App: React.FC = () => {
   const [settings, setSettings] = useState<GameSettings>(loadSettings);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const [isChallengesOpen, setIsChallengesOpen] = useState(false);
   const [currentMilestoneIndex, setCurrentMilestoneIndex] = useState<number>(initialMilestoneIndex);
   const [activeBoosts, setActiveBoosts] = useState<ActiveBoost[]>([]);
   const [milestoneToast, setMilestoneToast] = useState<MilestoneToastInfo | null>(null);
   const [achievementToast, setAchievementToast] = useState<AchievementToastInfo | null>(null);
+  const [challengeToast, setChallengeToast] = useState<ChallengeToastInfo | null>(null);
   const [playerStats, setPlayerStats] = useState<PlayerStats>(initialStats);
   const [unlockedAchievements, setUnlockedAchievements] = useState<Set<string>>(initialUnlockedAchievements);
-  const [goldenChips, setGoldenChips] = useState<GoldenChipType[]>([]);
+  const [completedChallenges, setCompletedChallenges] = useState<Set<string>>(initialCompletedChallenges);
+  const [goldenDroplets, setGoldenDroplets] = useState<GoldenDropletType[]>([]);
   const [activeMobileView, setActiveMobileView] = useState<MobileView>('main');
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [prestigePoints, setPrestigePoints] = useState<number>(initialPrestigePoints);
+  const [prestigeUpgrades, setPrestigeUpgrades] = useState<PrestigeUpgrade[]>(initialPrestigeUpgrades);
+  const [loginStreak, setLoginStreak] = useState<number>(initialLoginStreak);
+  const [lastLoginDate, setLastLoginDate] = useState<string | null>(initialLastLoginDate);
+  const [isDailyRewardModalOpen, setIsDailyRewardModalOpen] = useState(false);
+  const [effectiveStreak, setEffectiveStreak] = useState(1);
+  const [activeChallenge, setActiveChallenge] = useState<ActiveChallengeState | null>(null);
 
   const particleCanvasRef = useRef<ParticleCanvasHandle>(null);
-  const goldenChipTimerRef = useRef<number | null>(null);
+  const goldenDropletTimerRef = useRef<number | null>(null);
   const cyclesRef = useRef(cycles);
   const musicRef = useRef<HTMLAudioElement | null>(null);
   cyclesRef.current = cycles;
@@ -125,7 +164,12 @@ const App: React.FC = () => {
     milestoneIndex: currentMilestoneIndex,
     stats: playerStats,
     unlockedAchievements: Array.from(unlockedAchievements),
-  }), [cycles, upgrades, currentMilestoneIndex, playerStats, unlockedAchievements]);
+    completedChallenges: Array.from(completedChallenges),
+    prestigePoints,
+    prestigeUpgrades: prestigeUpgrades.map(({ id, level }) => ({ id, level })),
+    lastLoginDate,
+    loginStreak,
+  }), [cycles, upgrades, currentMilestoneIndex, playerStats, unlockedAchievements, completedChallenges, prestigePoints, prestigeUpgrades, lastLoginDate, loginStreak]);
   
   useEffect(() => {
     if (!musicRef.current) {
@@ -156,6 +200,33 @@ const App: React.FC = () => {
         console.warn("Sound playback failed:", error);
     });
   }, [settings.sfxEnabled, settings.sfxVolume]);
+
+  // Daily Reward Check Logic - runs once on startup
+  useEffect(() => {
+    const today = new Date();
+    const todayString = today.toDateString();
+    
+    // If the player has already claimed today's reward, do nothing.
+    if (lastLoginDate === todayString) {
+        return; 
+    }
+
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    const yesterdayString = yesterday.toDateString();
+
+    let currentStreak = 1;
+    // Check if the last login was yesterday to continue the streak
+    if (lastLoginDate === yesterdayString) {
+        currentStreak = loginStreak + 1;
+    } // Otherwise, it's a new streak, which defaults to 1.
+
+    setEffectiveStreak(currentStreak);
+    // Use a small timeout to let the rest of the app load before showing the modal
+    setTimeout(() => {
+        setIsDailyRewardModalOpen(true);
+    }, 500);
+  }, []); // Intentionally empty dependency array to run only on initial mount.
   
   const totalBoostMultiplier = useCallback((type: 'click_multiplier' | 'bps_multiplier') => {
       const now = Date.now();
@@ -164,21 +235,40 @@ const App: React.FC = () => {
           .reduce((acc, b) => acc * b.multiplier, 1);
   }, [activeBoosts]);
 
+  const prestigeMultiplier = useMemo(() => {
+    return 1 + prestigeUpgrades.reduce((total, u) => {
+        if (u.bonus.type === 'all_cycles_multiplier') {
+            return total + u.bonus.value * u.level;
+        }
+        return total;
+    }, 0);
+  }, [prestigeUpgrades]);
+
+  const baseCyclesPerSecond = useMemo(() => {
+    return upgrades
+      .filter(u => u.type === 'auto')
+      .reduce((total, u) => total + u.power * u.level, 0);
+  }, [upgrades]);
+
+  const cyclesPerSecond = useMemo(() => {
+    return baseCyclesPerSecond * totalBoostMultiplier('bps_multiplier') * prestigeMultiplier;
+  }, [baseCyclesPerSecond, totalBoostMultiplier, prestigeMultiplier]);
+
   const cyclesPerClick = useMemo(() => {
     const baseCPC = upgrades
       .filter(u => u.type === 'click' && u.level > 0)
       .reduce((total, u) => total + u.power * u.level, 1);
       
-    return baseCPC * totalBoostMultiplier('click_multiplier');
-  }, [upgrades, totalBoostMultiplier]);
+    const synergyBonus = prestigeUpgrades.reduce((total, u) => {
+        if (u.bonus.type === 'cps_to_click_synergy') {
+            return total + (u.bonus.value * u.level * baseCyclesPerSecond);
+        }
+        return total;
+    }, 0);
 
-  const cyclesPerSecond = useMemo(() => {
-    const baseCPS = upgrades
-      .filter(u => u.type === 'auto')
-      .reduce((total, u) => total + u.power * u.level, 0);
+    return (baseCPC + synergyBonus) * totalBoostMultiplier('click_multiplier') * prestigeMultiplier;
+  }, [upgrades, totalBoostMultiplier, prestigeMultiplier, prestigeUpgrades, baseCyclesPerSecond]);
 
-    return baseCPS * totalBoostMultiplier('bps_multiplier');
-  }, [upgrades, totalBoostMultiplier]);
 
   useEffect(() => {
     const previousCycles = cyclesRef.current;
@@ -201,7 +291,7 @@ const App: React.FC = () => {
   }, [cyclesPerSecond]);
 
   useEffect(() => {
-    document.title = `${Math.floor(cycles).toLocaleString()} Cycles | Chip Clicker`;
+    document.title = `${Math.floor(cycles).toLocaleString()} Essence | Elixir Clicker`;
   }, [cycles]);
   
   useEffect(() => {
@@ -225,7 +315,7 @@ const App: React.FC = () => {
   }, [currentMilestoneIndex]);
 
   useEffect(() => {
-    if (!currentMilestone) return; 
+    if (!currentMilestone || activeChallenge) return; 
 
     if (playerStats.xp >= currentMilestone.xpRequired) {
       playSound(milestoneSound);
@@ -242,7 +332,7 @@ const App: React.FC = () => {
 
       const rewardDescription = reward.type === 'click_multiplier' 
         ? `${reward.multiplier}x click power for ${reward.duration} seconds!`
-        : `${reward.multiplier}x cycles per second for ${reward.duration} seconds!`;
+        : `${reward.multiplier}x essence per second for ${reward.duration} seconds!`;
 
       setMilestoneToast({
           id: Date.now(),
@@ -251,7 +341,7 @@ const App: React.FC = () => {
       });
       setCurrentMilestoneIndex(prev => prev + 1);
     }
-  }, [playerStats.xp, currentMilestone, playSound]);
+  }, [playerStats.xp, currentMilestone, playSound, activeChallenge]);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -302,16 +392,16 @@ const App: React.FC = () => {
     }
   }, [playerStats, upgrades, unlockedAchievements, playSound]);
 
-  // Golden Chip Spawner
+  // Golden Droplet Spawner
     useEffect(() => {
         const scheduleNextSpawn = () => {
-            if (goldenChipTimerRef.current) {
-                clearTimeout(goldenChipTimerRef.current);
+            if (goldenDropletTimerRef.current) {
+                clearTimeout(goldenDropletTimerRef.current);
             }
-            const delay = Math.random() * (GOLDEN_CHIP_SPAWN_INTERVAL_MAX - GOLDEN_CHIP_SPAWN_INTERVAL_MIN) + GOLDEN_CHIP_SPAWN_INTERVAL_MIN;
+            const delay = Math.random() * (GOLDEN_DROPLET_SPAWN_INTERVAL_MAX - GOLDEN_DROPLET_SPAWN_INTERVAL_MIN) + GOLDEN_DROPLET_SPAWN_INTERVAL_MIN;
             
-            goldenChipTimerRef.current = setTimeout(() => {
-                setGoldenChips(prev => {
+            goldenDropletTimerRef.current = setTimeout(() => {
+                setGoldenDroplets(prev => {
                     if (prev.length === 0) {
                         playSound(goldenChipSpawnSound);
                         return [{
@@ -330,25 +420,94 @@ const App: React.FC = () => {
         scheduleNextSpawn();
 
         return () => {
-            if (goldenChipTimerRef.current) {
-                clearTimeout(goldenChipTimerRef.current);
+            if (goldenDropletTimerRef.current) {
+                clearTimeout(goldenDropletTimerRef.current);
             }
         };
     }, [playSound]);
 
-    // Golden Chip Timeout
+    // Golden Droplet Timeout
     useEffect(() => {
-        const visibleChip = goldenChips.find(gc => gc.status === 'visible');
-        if (visibleChip) {
+        const visibleDroplet = goldenDroplets.find(gc => gc.status === 'visible');
+        if (visibleDroplet) {
             const timeoutId = setTimeout(() => {
-                setGoldenChips(prev => prev.map(gc => 
-                    gc.id === visibleChip.id ? { ...gc, status: 'missed' } : gc
+                setGoldenDroplets(prev => prev.map(gc => 
+                    gc.id === visibleDroplet.id ? { ...gc, status: 'missed' } : gc
                 ));
-            }, GOLDEN_CHIP_LIFESPAN);
+            }, GOLDEN_DROPLET_LIFESPAN);
 
             return () => clearTimeout(timeoutId);
         }
-    }, [goldenChips]);
+    }, [goldenDroplets]);
+    
+    // --- Challenge Logic ---
+    
+    const handleChallengeEnd = useCallback((isSuccess: boolean) => {
+        if (!activeChallenge) return;
+        
+        const { challenge } = activeChallenge;
+
+        if (isSuccess) {
+            playSound(milestoneSound);
+            if (challenge.reward.type === 'prestige_points') {
+                setPrestigePoints(prev => prev + challenge.reward.value);
+            }
+            setCompletedChallenges(prev => new Set([...prev, challenge.id]));
+            setChallengeToast({
+                id: Date.now(),
+                name: challenge.name,
+                status: 'success',
+                rewardDescription: `+${challenge.reward.value} Prestige Points`
+            });
+        } else {
+            // Optional: play failure sound
+            setChallengeToast({
+                id: Date.now(),
+                name: challenge.name,
+                status: 'failure',
+            });
+        }
+        
+        setActiveChallenge(null);
+    }, [activeChallenge, playSound]);
+
+    // Challenge Timer
+    useEffect(() => {
+        if (!activeChallenge) return;
+
+        const timer = setInterval(() => {
+            const elapsed = Date.now() - activeChallenge.startTime;
+            if (elapsed >= activeChallenge.challenge.duration * 1000) {
+                handleChallengeEnd(false); // Time's up, not a success (unless already completed)
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [activeChallenge, handleChallengeEnd]);
+    
+    // Challenge Progress Checker
+    useEffect(() => {
+        if (!activeChallenge) return;
+
+        const { challenge, initialValue } = activeChallenge;
+        let isComplete = false;
+
+        if (challenge.objective.type === 'earn_essence') {
+            const earned = cycles - initialValue;
+            if (earned >= challenge.objective.value) {
+                isComplete = true;
+            }
+        } else if (challenge.objective.type === 'upgrade_level') {
+            const upgrade = upgrades.find(u => u.id === challenge.objective.upgradeId);
+            if (upgrade && upgrade.level >= challenge.objective.value) {
+                isComplete = true;
+            }
+        }
+
+        if (isComplete) {
+            handleChallengeEnd(true); // Objective met, success!
+        }
+    }, [cycles, upgrades, activeChallenge, handleChallengeEnd]);
 
 
   const handleChipClick = useCallback((e: React.MouseEvent<HTMLElement>) => {
@@ -405,6 +564,103 @@ const App: React.FC = () => {
       setPlayerStats(prev => ({...prev, xp: prev.xp + levelsToBuy * 5 }));
     }
   }, [cycles, upgrades, playSound]);
+  
+  const handlePurchasePrestigeUpgrade = useCallback((upgradeId: string) => {
+    const upgrade = prestigeUpgrades.find(u => u.id === upgradeId);
+    if (!upgrade) return;
+
+    const cost = upgrade.cost(upgrade.level);
+    if (prestigePoints >= cost && (!upgrade.maxLevel || upgrade.level < upgrade.maxLevel)) {
+        playSound(purchaseSound);
+        setPrestigePoints(prev => prev - cost);
+        setPrestigeUpgrades(prevUpgrades =>
+            prevUpgrades.map(u =>
+                u.id === upgradeId ? { ...u, level: u.level + 1 } : u
+            )
+        );
+    }
+  }, [prestigePoints, prestigeUpgrades, playSound]);
+
+  const handlePrestige = useCallback(() => {
+    const pointsGained = calculatePrestigePoints(playerStats.totalCyclesEarned);
+    if (pointsGained <= 0) {
+        alert("You have not earned enough essence to gain Prestige Points.");
+        return;
+    }
+
+    if (window.confirm(`Are you sure you want to prestige? This will reset your essence, upgrades, and milestones, but you will gain ${pointsGained} Prestige Points.`)) {
+        const startingCycles = prestigeUpgrades.reduce((total, u) => {
+            if (u.bonus.type === 'starting_cycles') {
+                return total + u.bonus.value * u.level;
+            }
+            return total;
+        }, 0);
+
+        setCycles(startingCycles);
+        setUpgrades(INITIAL_UPGRADES.map(u => ({ ...u, level: 0 })));
+        setCurrentMilestoneIndex(0);
+        setPlayerStats(prev => ({
+            ...prev,
+            totalClicks: 0,
+            totalCyclesEarned: 0,
+            xp: 0,
+            totalPrestigePointsEver: prev.totalPrestigePointsEver + pointsGained,
+            totalPrestiges: (prev.totalPrestiges || 0) + 1,
+        }));
+        setPrestigePoints(prev => prev + pointsGained);
+        setActiveBoosts([]);
+        setFloatingNumbers([]);
+        
+        playSound(milestoneSound);
+    }
+  }, [playerStats.totalCyclesEarned, prestigeUpgrades, playSound]);
+
+  const handleClaimDailyReward = useCallback(() => {
+    const rewardIndex = (effectiveStreak - 1) % DAILY_REWARDS.length;
+    const reward = DAILY_REWARDS[rewardIndex];
+
+    // Apply reward
+    switch (reward.type) {
+        case 'essence_minutes':
+            // Base of 100 essence ensures reward even with 0 EPS
+            const essenceToAdd = Math.max(100, (cyclesPerSecond || 1) * 60 * reward.value);
+            setCycles(c => c + essenceToAdd);
+            break;
+        case 'prestige_points':
+            setPrestigePoints(p => p + reward.value);
+            break;
+        case 'click_boost': {
+            const clickBoost: ActiveBoost = {
+                id: Date.now(),
+                type: 'click_multiplier',
+                multiplier: reward.value,
+                endTime: Date.now() + (reward.duration || 60) * 1000,
+                source: 'Daily Reward'
+            };
+            setActiveBoosts(prev => [...prev, clickBoost]);
+            break;
+        }
+        case 'bps_boost': {
+            const bpsBoost: ActiveBoost = {
+                id: Date.now(),
+                type: 'bps_multiplier',
+                multiplier: reward.value,
+                endTime: Date.now() + (reward.duration || 60) * 1000,
+                source: 'Daily Reward'
+            };
+            setActiveBoosts(prev => [...prev, bpsBoost]);
+            break;
+        }
+    }
+    
+    playSound(milestoneSound); // Re-using a celebratory sound
+
+    // Update state
+    setLoginStreak(effectiveStreak);
+    setLastLoginDate(new Date().toDateString());
+    setIsDailyRewardModalOpen(false);
+
+  }, [effectiveStreak, cyclesPerSecond, playSound]);
 
   const handleAnimationEnd = useCallback((id: number) => {
     setFloatingNumbers(current => current.filter(n => n.id !== id));
@@ -427,25 +683,27 @@ const App: React.FC = () => {
     }
   };
 
-  const handleGoldenChipClick = useCallback((id: number) => {
+  const handleGoldenDropletClick = useCallback((id: number) => {
       playSound(goldenChipClickSound);
       
-      setGoldenChips(prev => prev.map(gc => 
+      setGoldenDroplets(prev => prev.map(gc => 
           gc.id === id ? { ...gc, status: 'clicked' } : gc
       ));
+      
+      setPlayerStats(prev => ({ ...prev, goldenDropletsClicked: (prev.goldenDropletsClicked || 0) + 1 }));
 
       const newBoost: ActiveBoost = {
           id: Date.now(),
           type: 'click_multiplier',
-          multiplier: GOLDEN_CHIP_BOOST_MULTIPLIER,
-          endTime: Date.now() + GOLDEN_CHIP_BOOST_DURATION * 1000,
-          source: 'Golden Chip!'
+          multiplier: GOLDEN_DROPLET_BOOST_MULTIPLIER,
+          endTime: Date.now() + GOLDEN_DROPLET_BOOST_DURATION * 1000,
+          source: 'Golden Droplet!'
       };
       setActiveBoosts(prev => [...prev, newBoost]);
   }, [playSound]);
 
-  const handleGoldenChipDisappeared = useCallback((id: number) => {
-      setGoldenChips(prev => prev.filter(gc => gc.id !== id));
+  const handleGoldenDropletDisappeared = useCallback((id: number) => {
+      setGoldenDroplets(prev => prev.filter(gc => gc.id !== id));
   }, []);
 
   const handleLoadState = useCallback((loadedState: SaveState) => {
@@ -456,10 +714,21 @@ const App: React.FC = () => {
             const savedUpgrade = loadedState.upgrades.find(u => u.id === initialUpgrade.id);
             return savedUpgrade ? { ...initialUpgrade, level: savedUpgrade.level } : initialUpgrade;
         });
+        const mergedPrestigeUpgrades = INITIAL_PRESTIGE_UPGRADES.map(initialUpgrade => {
+            const savedUpgrade = loadedState.prestigeUpgrades?.find(u => u.id === initialUpgrade.id);
+            return savedUpgrade ? { ...initialUpgrade, level: savedUpgrade.level } : initialUpgrade;
+        });
+
         setUpgrades(mergedUpgrades);
         setCurrentMilestoneIndex(loadedState.milestoneIndex);
         setPlayerStats(loadedState.stats);
         setUnlockedAchievements(new Set(loadedState.unlockedAchievements));
+        setCompletedChallenges(new Set(loadedState.completedChallenges || []));
+        setPrestigePoints(loadedState.prestigePoints || 0);
+        setPrestigeUpgrades(mergedPrestigeUpgrades || INITIAL_PRESTIGE_UPGRADES);
+        setLoginStreak(loadedState.loginStreak || 0);
+        setLastLoginDate(loadedState.lastLoginDate || null);
+
         console.log("Game state loaded.");
       } catch (e) {
           console.error("Failed to parse or apply save data:", e);
@@ -492,10 +761,43 @@ const App: React.FC = () => {
     }
   }, [handleLoadState]);
 
+  const handleStartChallenge = useCallback((challenge: Challenge) => {
+    if (activeChallenge) {
+        alert("You are already in a challenge!");
+        return;
+    }
+    playSound(purchaseSound);
+    let initialValue = 0;
+    if (challenge.objective.type === 'earn_essence') {
+        initialValue = cycles;
+    } else if (challenge.objective.type === 'upgrade_level') {
+        const upg = upgrades.find(u => u.id === challenge.objective.upgradeId);
+        initialValue = upg ? upg.level : 0;
+    }
+    
+    setActiveChallenge({
+        challenge,
+        startTime: Date.now(),
+        initialValue,
+    });
+    setIsChallengesOpen(false);
+  }, [activeChallenge, cycles, upgrades, playSound]);
+
+  const handleAbandonChallenge = useCallback(() => {
+    if (window.confirm("Are you sure you want to abandon this challenge? Your progress will be lost.")) {
+        setActiveChallenge(null);
+    }
+  }, []);
+
 
   return (
     <div className="h-screen bg-transparent text-slate-200 flex flex-col overflow-hidden relative font-sans pb-20 lg:pb-0">
       {settings.showBackgroundEffects && <BackgroundEffects />}
+      <DailyRewardModal
+        isOpen={isDailyRewardModalOpen}
+        onClaim={handleClaimDailyReward}
+        streak={effectiveStreak}
+      />
       {milestoneToast && (
         <MilestoneToast 
             key={milestoneToast.id}
@@ -512,13 +814,36 @@ const App: React.FC = () => {
               onClose={() => setAchievementToast(null)}
           />
       )}
+      {challengeToast && (
+          <ChallengeToast
+              key={challengeToast.id}
+              name={challengeToast.name}
+              status={challengeToast.status}
+              rewardDescription={challengeToast.rewardDescription}
+              onClose={() => setChallengeToast(null)}
+          />
+      )}
       <div className="absolute top-4 right-4 z-50 flex gap-2 items-center">
+        <button
+          onClick={() => setIsChallengesOpen(true)}
+          className="p-3 rounded-full bg-slate-900/50 hover:bg-slate-800/80 text-slate-300 border border-slate-700 backdrop-blur-sm transition-all shadow-lg hover:shadow-pink-500/10 active:scale-95 hover:text-pink-300"
+          aria-label="Open challenges"
+        >
+          <StopwatchIcon />
+        </button>
         <button
           onClick={() => setIsAchievementsOpen(true)}
           className="p-3 rounded-full bg-slate-900/50 hover:bg-slate-800/80 text-slate-300 border border-slate-700 backdrop-blur-sm transition-all shadow-lg hover:shadow-pink-500/10 active:scale-95 hover:text-pink-300"
           aria-label="Open achievements"
         >
           <AchievementIcon />
+        </button>
+        <button
+          onClick={() => setIsStatsOpen(true)}
+          className="p-3 rounded-full bg-slate-900/50 hover:bg-slate-800/80 text-slate-300 border border-slate-700 backdrop-blur-sm transition-all shadow-lg hover:shadow-pink-500/10 active:scale-95 hover:text-pink-300"
+          aria-label="Open statistics"
+        >
+          <ChartBarIcon />
         </button>
         <button
           onClick={() => setIsSettingsOpen(true)}
@@ -543,10 +868,19 @@ const App: React.FC = () => {
             />
         </div>
         <div className="lg:col-span-3 h-full flex flex-col gap-4 min-h-0">
-             <MilestoneTracker 
-                currentMilestone={currentMilestone}
-                playerStats={playerStats}
-            />
+             {activeChallenge ? (
+                <ChallengeTracker
+                    activeChallenge={activeChallenge}
+                    cycles={cycles}
+                    upgrades={upgrades}
+                    onAbandon={handleAbandonChallenge}
+                />
+             ) : (
+                <MilestoneTracker 
+                    currentMilestone={currentMilestone}
+                    playerStats={playerStats}
+                />
+             )}
             <div className="flex-grow min-h-0">
                 <BuildingDisplay upgrades={upgrades} />
             </div>
@@ -556,6 +890,9 @@ const App: React.FC = () => {
               upgrades={upgrades}
               onPurchase={handlePurchaseUpgrade}
               cycles={cycles}
+              prestigePoints={prestigePoints}
+              prestigeUpgrades={prestigeUpgrades}
+              onPurchasePrestige={handlePurchasePrestigeUpgrade}
             />
         </div>
       </main>
@@ -563,10 +900,19 @@ const App: React.FC = () => {
       {/* Mobile Layout */}
       <main className="lg:hidden w-full flex-grow p-4 flex flex-col min-h-0">
         <div className="flex-shrink-0 mb-4">
-            <MilestoneTracker 
-                currentMilestone={currentMilestone}
-                playerStats={playerStats}
-            />
+            {activeChallenge ? (
+                <ChallengeTracker
+                    activeChallenge={activeChallenge}
+                    cycles={cycles}
+                    upgrades={upgrades}
+                    onAbandon={handleAbandonChallenge}
+                />
+             ) : (
+                <MilestoneTracker 
+                    currentMilestone={currentMilestone}
+                    playerStats={playerStats}
+                />
+             )}
         </div>
         <div className="flex-grow min-h-0">
             {activeMobileView === 'main' && (
@@ -588,6 +934,9 @@ const App: React.FC = () => {
                     upgrades={upgrades}
                     onPurchase={handlePurchaseUpgrade}
                     cycles={cycles}
+                    prestigePoints={prestigePoints}
+                    prestigeUpgrades={prestigeUpgrades}
+                    onPurchasePrestige={handlePurchasePrestigeUpgrade}
                  />
             )}
         </div>
@@ -597,12 +946,12 @@ const App: React.FC = () => {
 
       <ParticleCanvas ref={particleCanvasRef} />
       
-      {goldenChips.map((gc) => (
-        <GoldenChip
+      {goldenDroplets.map((gc) => (
+        <GoldenDroplet
             key={gc.id}
-            goldenChip={gc}
-            onClick={handleGoldenChipClick}
-            onDisappeared={handleGoldenChipDisappeared}
+            goldenDroplet={gc}
+            onClick={handleGoldenDropletClick}
+            onDisappeared={handleGoldenDropletDisappeared}
         />
       ))}
       <SettingsModal
@@ -615,6 +964,8 @@ const App: React.FC = () => {
         onLoadGame={handleLoadState}
         onManualSave={handleManualSave}
         onManualLoad={handleManualLoad}
+        onPrestige={handlePrestige}
+        totalCyclesEarned={playerStats.totalCyclesEarned}
       />
       <AchievementsModal
         isOpen={isAchievementsOpen}
@@ -623,6 +974,28 @@ const App: React.FC = () => {
         unlockedAchievements={unlockedAchievements}
         playerStats={playerStats}
         upgrades={upgrades}
+      />
+       <ChallengesModal
+        isOpen={isChallengesOpen}
+        onClose={() => setIsChallengesOpen(false)}
+        challenges={CHALLENGES}
+        completedChallenges={completedChallenges}
+        playerStats={playerStats}
+        onStartChallenge={handleStartChallenge}
+        activeChallenge={activeChallenge}
+      />
+      <StatsModal
+        isOpen={isStatsOpen}
+        onClose={() => setIsStatsOpen(false)}
+        stats={playerStats}
+        cycles={cycles}
+        cyclesPerClick={cyclesPerClick}
+        cyclesPerSecond={cyclesPerSecond}
+        prestigePoints={prestigePoints}
+        prestigePointsToGain={calculatePrestigePoints(playerStats.totalCyclesEarned)}
+        upgrades={upgrades}
+        unlockedAchievementsCount={unlockedAchievements.size}
+        completedChallengesCount={completedChallenges.size}
       />
     </div>
   );

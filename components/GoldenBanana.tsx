@@ -1,28 +1,27 @@
-
 import React, { useEffect } from 'react';
-import { GoldenChipIcon } from '../constants';
-import type { GoldenChipType } from '../types';
+import { GoldenDropletIcon } from '../constants';
+import type { GoldenDropletType } from '../types';
 
-interface GoldenChipProps {
-  goldenChip: GoldenChipType;
+interface GoldenDropletProps {
+  goldenDroplet: GoldenDropletType;
   onClick: (id: number) => void;
   onDisappeared: (id: number) => void;
 }
 
-const GoldenChip: React.FC<GoldenChipProps> = ({ goldenChip, onClick, onDisappeared }) => {
+const GoldenDroplet: React.FC<GoldenDropletProps> = ({ goldenDroplet, onClick, onDisappeared }) => {
     
     useEffect(() => {
         let timeout: number | undefined;
-        if (goldenChip.status === 'clicked') {
-            timeout = setTimeout(() => onDisappeared(goldenChip.id), 400); // collect animation
-        } else if (goldenChip.status === 'missed') {
-            timeout = setTimeout(() => onDisappeared(goldenChip.id), 500); // fade out animation
+        if (goldenDroplet.status === 'clicked') {
+            timeout = setTimeout(() => onDisappeared(goldenDroplet.id), 400); // collect animation
+        } else if (goldenDroplet.status === 'missed') {
+            timeout = setTimeout(() => onDisappeared(goldenDroplet.id), 500); // fade out animation
         }
         return () => clearTimeout(timeout);
-    }, [goldenChip.status, goldenChip.id, onDisappeared]);
+    }, [goldenDroplet.status, goldenDroplet.id, onDisappeared]);
 
     const getAnimationClass = () => {
-        switch(goldenChip.status) {
+        switch(goldenDroplet.status) {
             case 'visible': return 'animate-fade-in-scale';
             case 'clicked': return 'animate-collect-effect';
             case 'missed': return 'animate-fade-out';
@@ -34,17 +33,17 @@ const GoldenChip: React.FC<GoldenChipProps> = ({ goldenChip, onClick, onDisappea
         <div
             className={`absolute z-40 drop-shadow-[0_0_15px_rgba(236,72,153,0.7)] ${getAnimationClass()}`}
             style={{
-                left: `${goldenChip.x}%`,
-                top: `${goldenChip.y}%`,
+                left: `${goldenDroplet.x}%`,
+                top: `${goldenDroplet.y}%`,
                 transform: 'translate(-50%, -50%)',
             }}
-            onClick={goldenChip.status === 'visible' ? () => onClick(goldenChip.id) : undefined}
+            onClick={goldenDroplet.status === 'visible' ? () => onClick(goldenDroplet.id) : undefined}
         >
-            <div className={`w-16 h-16 text-pink-400 ${goldenChip.status === 'visible' ? 'animate-golden-bob cursor-pointer' : ''}`}>
-                 <GoldenChipIcon />
+            <div className={`w-16 h-16 text-pink-400 ${goldenDroplet.status === 'visible' ? 'animate-golden-bob cursor-pointer' : ''}`}>
+                 <GoldenDropletIcon />
             </div>
         </div>
     );
 };
 
-export default GoldenChip;
+export default GoldenDroplet;

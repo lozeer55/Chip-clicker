@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chip Clicker</title>
+    <title>Elixir Clicker</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -135,13 +135,29 @@
         }
         .animate-purchase-feedback { animation: purchase-feedback 0.6s ease-out; }
         
-        @keyframes icon-purchase-effect {
-            from { transform: scale(1) rotate(0); opacity: 0.8; }
-            to { transform: scale(2.5) rotate(15deg); opacity: 0; }
-        }
-        .animate-icon-purchase-effect { animation: icon-purchase-effect 0.5s ease-out forwards; }
-
         .button-affordable-glow { animation: cost-glow 2.5s infinite ease-in-out; }
+
+        .upgrade-affordable-glow {
+            animation: cost-glow 2.5s infinite ease-in-out;
+            border-color: rgba(236, 72, 153, 0.4);
+        }
+
+        @keyframes shine-wipe {
+            0% { transform: translateX(-150%) skewX(-25deg); }
+            100% { transform: translateX(150%) skewX(-25deg); }
+        }
+        .animate-shine-wipe::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.35) 50%, rgba(255, 255, 255, 0) 100%);
+            animation: shine-wipe 0.7s ease-in-out;
+            pointer-events: none;
+        }
+
         @keyframes cost-glow {
             50% { box-shadow: 0 0 12px rgba(236, 72, 153, 0.6); }
         }
@@ -156,6 +172,11 @@
         }
         .animate-cps-pulse { animation: cps-pulse 2.5s infinite ease-in-out; }
 
+        @keyframes cps-boost-glow {
+            50% { text-shadow: 0 0 12px rgba(236, 72, 153, 0.8); }
+        }
+        .animate-cps-boost-glow { animation: cps-boost-glow 1.5s infinite ease-in-out; }
+
         @keyframes subtle-gradient {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -168,46 +189,37 @@
         }
 
         /* Custom Building Animations */
-        .animate-robot-walk { animation: robot-walk 2.5s infinite ease-in-out; }
-        @keyframes robot-walk {
-            0%, 100% { transform: translateY(0) rotate(0); }
-            25% { transform: translateY(-3px) rotate(-4deg); }
-            75% { transform: translateY(2px) rotate(4deg); }
+        .animate-cauldron-bubble { animation: cauldron-bubble 2.5s infinite ease-in-out; }
+        @keyframes cauldron-bubble {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-2px) scale(1.02); }
         }
 
-        .animate-chip-pulse { animation: chip-pulse 2s infinite ease-in-out; }
-        @keyframes chip-pulse {
-            50% { filter: drop-shadow(0 0 5px #f472b6); }
+        .animate-plant-grow { animation: plant-grow 4s infinite ease-in-out; }
+        @keyframes plant-grow {
+            0%, 100% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.05); filter: brightness(1.1); }
         }
 
-        .animate-factory-shake { animation: factory-shake 4s infinite linear; }
-        @keyframes factory-shake {
-            2%, 98% { transform: translate(0, 0) rotate(0); }
-            3% { transform: translate(1px, -1px) rotate(-1deg); }
-            4% { transform: translate(-1px, 1px) rotate(1deg); }
-            5% { transform: translate(0, 0) rotate(0); }
+        .animate-book-flutter { animation: book-flutter 5s infinite ease-in-out; }
+        @keyframes book-flutter {
+            0%, 100% { transform: rotate(-2deg); }
+            50% { transform: rotate(2deg); }
         }
 
-        .animate-led-blink { animation: led-blink 1.5s infinite steps(1, end); }
-        @keyframes led-blink {
-            50% { filter: brightness(1.75); }
+        .animate-crystal-glow { animation: crystal-glow 3s infinite ease-in-out; }
+        @keyframes crystal-glow {
+            50% { filter: drop-shadow(0 0 6px #f472b6); }
         }
 
-        .animate-truck-rumble { animation: truck-rumble 0.5s infinite linear; }
-        @keyframes truck-rumble {
-            0%, 100% { transform: translate(0, 0); }
-            25% { transform: translate(-1px, 1px); }
-            75% { transform: translate(1px, -1px); }
-        }
-
-        .animate-globe-spin { animation: globe-spin 20s infinite linear; }
-        @keyframes globe-spin {
+        .animate-portal-swirl { animation: portal-swirl 10s infinite linear; }
+        @keyframes portal-swirl {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
 
-        .animate-brain-glow { animation: brain-glow 2s infinite ease-in-out; }
-        @keyframes brain-glow {
+        .animate-stone-pulse { animation: stone-pulse 2s infinite ease-in-out; }
+        @keyframes stone-pulse {
             50% { filter: drop-shadow(0 0 8px rgba(192, 38, 211, 0.9)); }
         }
     </style>

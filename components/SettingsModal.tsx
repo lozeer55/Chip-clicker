@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { GameSettings, SaveState } from '../types';
 import GoogleAuth from './GoogleAuth';
+import { calculatePrestigePoints, PRESTIGE_REQUIREMENT, StarIcon } from '../constants';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -12,6 +13,8 @@ interface SettingsModalProps {
   onLoadGame: (state: SaveState) => void;
   onManualSave: () => void;
   onManualLoad: () => void;
+  onPrestige: () => void;
+  totalCyclesEarned: number;
 }
 
 const SpeakerIcon = () => (
@@ -65,10 +68,12 @@ const SettingsToggle: React.FC<SettingsToggleProps> = ({ label, description, isE
 );
 
 
-const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings, onSettingsChange, onReset, gameState, onLoadGame, onManualSave, onManualLoad }) => {
+const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings, onSettingsChange, onReset, gameState, onLoadGame, onManualSave, onManualLoad, onPrestige, totalCyclesEarned }) => {
   if (!isOpen) return null;
 
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
+  const prestigePointsToGain = calculatePrestigePoints(totalCyclesEarned);
+  const canPrestige = totalCyclesEarned >= PRESTIGE_REQUIREMENT;
 
   const handleManualSaveClick = () => {
     onManualSave();
@@ -162,19 +167,19 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
              <div className="space-y-3">
                  <SettingsToggle 
                     label="Floating Click Numbers"
-                    description="Shows the number of cycles gained per click."
+                    description="Shows the number of essence gained per click."
                     isEnabled={settings.showFloatingNumbers}
                     onToggle={() => onSettingsChange({ showFloatingNumbers: !settings.showFloatingNumbers })}
                  />
                  <SettingsToggle 
                     label="Click Particles"
-                    description="Visual effects when you click the chip."
+                    description="Visual effects when you click the cauldron."
                     isEnabled={settings.showParticles}
                     onToggle={() => onSettingsChange({ showParticles: !settings.showParticles })}
                  />
                  <SettingsToggle 
                     label="Background Effects"
-                    description="Animated circuits in the background."
+                    description="Animated runes in the background."
                     isEnabled={settings.showBackgroundEffects}
                     onToggle={() => onSettingsChange({ showBackgroundEffects: !settings.showBackgroundEffects })}
                  />
@@ -212,6 +217,34 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
 
           <div className="border-t border-slate-700/80"></div>
 
+          {/* Prestige Section */}
+          <section>
+              <h3 className="font-bold text-lg mb-2 text-purple-300 flex items-center"><StarIcon className="h-5 w-5 mr-2" /> Prestige</h3>
+              <div className="p-4 bg-purple-500/10 rounded-lg border border-purple-500/30 space-y-3">
+                  <p className="text-sm text-slate-400">Reset your progress to gain Prestige Points, which can be used to purchase powerful permanent upgrades.</p>
+                  <div className="text-center bg-slate-700/50 p-3 rounded-md">
+                      <p className="text-slate-400 text-sm">On prestige, you will gain:</p>
+                      <p className="text-2xl font-bold font-mono text-purple-300">{prestigePointsToGain.toLocaleString()} PP</p>
+                  </div>
+                  
+                  {!canPrestige &&
+                      <div className="text-center text-sm text-amber-400">
+                         Requires {PRESTIGE_REQUIREMENT.toLocaleString()} total essence earned.
+                      </div>
+                  }
+
+                  <button
+                      onClick={onPrestige}
+                      disabled={!canPrestige}
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 active:scale-95 disabled:bg-slate-600 disabled:cursor-not-allowed"
+                  >
+                      Prestige
+                  </button>
+              </div>
+          </section>
+
+          <div className="border-t border-slate-700/80"></div>
+          
           {/* Danger Zone Section */}
           <section>
             <h3 className="font-bold text-lg mb-2 text-red-500">Danger Zone</h3>
