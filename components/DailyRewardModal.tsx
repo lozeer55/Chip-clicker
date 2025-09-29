@@ -28,7 +28,7 @@ const RewardItem: React.FC<{ reward: DailyReward; isCurrent: boolean; }> = ({ re
 
     return (
         <div className={`relative p-3 text-center rounded-xl border-2 transition-all duration-300
-            ${isCurrent ? 'bg-pink-900/40 border-pink-500 scale-105 shadow-lg shadow-pink-500/20' : 'bg-slate-700/50 border-slate-600'}
+            ${isCurrent ? 'bg-pink-900/40 border-pink-500 sm:scale-105 shadow-lg shadow-pink-500/20' : 'bg-slate-700/50 border-slate-600'}
         `}>
             <p className="font-bold text-sm text-slate-300">Day {reward.day}</p>
             <div className={`my-2 flex justify-center text-4xl ${isCurrent ? 'text-pink-300' : 'text-slate-400'}`}>
@@ -63,7 +63,7 @@ const DailyRewardModal: React.FC<DailyRewardModalProps> = ({ isOpen, onClaim, st
                     <p className="text-slate-400 text-sm mt-1">Come back every day for better rewards. Missing a day will reset your streak.</p>
                 </div>
 
-                <div className="grid grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-3 mb-6">
                     {DAILY_REWARDS.map((reward, index) => (
                         <RewardItem 
                             key={reward.day}

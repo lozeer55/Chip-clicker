@@ -14,6 +14,7 @@ export interface Upgrade {
   power: number;
   // FIX: Changed icon type to be a ReactElement that accepts a className prop to allow props to be passed via React.cloneElement without type errors.
   icon: React.ReactElement<{ className?: string }>;
+  maxLevel: number;
 }
 
 export interface UpgradeTier {
@@ -112,7 +113,9 @@ export interface GoldenDropletType {
 export type PrestigeBonus = 
     | { type: 'all_cycles_multiplier'; value: number }
     | { type: 'starting_cycles'; value: number }
-    | { type: 'cps_to_click_synergy'; value: number };
+    | { type: 'cps_to_click_synergy'; value: number }
+    | { type: 'increase_max_level'; upgradeIds: string[]; amount: number }
+    | { type: 'increase_power_multiplier'; upgradeIds: string[]; multiplier: number };
 
 export interface PrestigeUpgrade {
   id: string;
@@ -123,6 +126,7 @@ export interface PrestigeUpgrade {
   maxLevel?: number;
   bonus: PrestigeBonus;
   icon: React.ReactElement<{ className?: string }>;
+  requires?: string;
 }
 
 export type SaveState = {
@@ -138,7 +142,7 @@ export type SaveState = {
     completedChallenges: string[];
 };
 
-export type MobileView = 'main' | 'upgrades' | 'buildings';
+export type MobileView = 'main' | 'upgrades' | 'buildings' | 'progress';
 
 export type DailyReward = {
     day: number;

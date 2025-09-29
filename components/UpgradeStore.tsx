@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { Upgrade, UpgradeTier, PrestigeUpgrade } from '../types';
-import { UPGRADE_TIERS, LockIcon, StarIcon } from '../constants';
+import { UPGRADE_TIERS, LockIcon, StarIcon, PRESTIGE_UPGRADES } from '../constants';
 
 interface UpgradeItemProps {
   upgrade: Upgrade;
@@ -22,12 +22,14 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
   }, [upgrade]);
   
   const maxLevelsToBuy = useMemo(() => {
-    if (isLocked) return 0;
+    if (isLocked || upgrade.level >= upgrade.maxLevel) return 0;
+    
     let levels = 0;
     let remainingCycles = cycles;
-    const { baseCost, costGrowth, level } = upgrade;
+    const { baseCost, costGrowth, level, maxLevel } = upgrade;
+    const levelsRemaining = maxLevel - level;
 
-    while (true) {
+    while (levels < levelsRemaining) {
         const nextLevelCost = Math.floor(baseCost * Math.pow(costGrowth, level + levels));
         if (remainingCycles >= nextLevelCost) {
             remainingCycles -= nextLevelCost;
@@ -40,7 +42,7 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
   }, [cycles, upgrade, isLocked]);
 
   const { levelsToBuy, totalCost, canAfford } = useMemo(() => {
-    if (isLocked) return { levelsToBuy: 0, totalCost: 0, canAfford: false };
+    if (isLocked || upgrade.level >= upgrade.maxLevel) return { levelsToBuy: 0, totalCost: 0, canAfford: false };
 
     if (buyAmount === 'max') {
         const levels = maxLevelsToBuy;
@@ -51,7 +53,8 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
             canAfford: levels > 0,
         };
     } else {
-        const levels = buyAmount;
+        const levels = Math.min(buyAmount, upgrade.maxLevel - upgrade.level);
+        if (levels <= 0) return { levelsToBuy: 0, totalCost: 0, canAfford: false };
         const cost = calculateCost(upgrade.level, levels);
         return {
             levelsToBuy: levels,
@@ -59,16 +62,16 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
             canAfford: cycles >= cost,
         };
     }
-  }, [buyAmount, cycles, upgrade.level, calculateCost, maxLevelsToBuy, isLocked]);
+  }, [buyAmount, cycles, upgrade, calculateCost, maxLevelsToBuy, isLocked]);
   
   const singleLevelCost = useMemo(() => calculateCost(upgrade.level, 1), [upgrade.level, calculateCost]);
-  const isAffordableForOne = !isLocked && cycles >= singleLevelCost;
+  const isAffordableForOne = !isLocked && cycles >= singleLevelCost && upgrade.level < upgrade.maxLevel;
   
   const [animationClass, setAnimationClass] = useState('');
   const [isShaking, setIsShaking] = useState(false);
   const [iconEffectKey, setIconEffectKey] = useState<number | null>(null);
   const [isCostHovered, setIsCostHovered] = useState(false);
-  const prevCanAfford = useRef(!isLocked && cycles >= singleLevelCost);
+  const prevCanAfford = useRef(isAffordableForOne);
   const prevLevel = useRef(upgrade.level);
 
   useEffect(() => {
@@ -80,7 +83,7 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
       animationDuration = 600;
       setIconEffectKey(Date.now());
     } 
-    else if (!isLocked && cycles >= singleLevelCost && !prevCanAfford.current) {
+    else if (isAffordableForOne && !prevCanAfford.current) {
       animationName = 'animate-shine-pop';
       animationDuration = 600;
     }
@@ -92,11 +95,11 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
       }, animationDuration);
       return () => clearTimeout(timer);
     }
-  }, [upgrade.level, cycles, singleLevelCost, isLocked]);
+  }, [upgrade.level, isAffordableForOne]);
 
   useEffect(() => {
     prevLevel.current = upgrade.level;
-    prevCanAfford.current = !isLocked && cycles >= singleLevelCost;
+    prevCanAfford.current = isAffordableForOne;
   });
 
   const handlePurchase = () => {
@@ -131,60 +134,70 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
       );
   }
 
+  const isMaxed = upgrade.level >= upgrade.maxLevel;
+
   return (
     <li className={`rounded-xl p-3 transition-all duration-200 bg-slate-800/60 hover:bg-slate-800/90 shadow-md hover:shadow-lg border ${animationClass} ${isShaking ? 'animate-shake' : ''} ${isAffordableForOne ? 'upgrade-affordable-glow' : 'border-slate-700/80'}`}>
-      <div className="w-full flex items-center gap-4 text-left">
-        <div className="relative bg-pink-500/10 text-pink-400 p-3 rounded-lg flex-shrink-0 overflow-hidden">
-            {React.cloneElement(upgrade.icon, { className: 'h-10 w-10' })}
-            {iconEffectKey && (
-              <div
-                key={iconEffectKey}
-                className="absolute inset-0 animate-shine-wipe pointer-events-none"
-              />
-            )}
-        </div>
-        <div className="flex-grow min-w-0">
-          <h4 className="font-semibold text-lg text-slate-100 truncate">{upgrade.name}</h4>
-          <p className="text-sm text-slate-400">{upgrade.description}</p>
-          <div 
-            className="relative mt-1 cursor-help w-fit"
-            onMouseEnter={() => setIsCostHovered(true)}
-            onMouseLeave={() => setIsCostHovered(false)}
-          >
-            <div className={`text-base font-semibold text-pink-400 transition-all font-mono tracking-tight ${canAfford ? 'animate-cost-glow' : ''}`}>
-                Cost: {totalCost.toLocaleString()}
+        <div className="flex flex-col sm:flex-row w-full items-start sm:items-center gap-3 text-left">
+            {/* Left/Top section */}
+            <div className="flex items-center gap-4 flex-grow min-w-0 w-full">
+                <div className="relative bg-pink-500/10 text-pink-400 p-3 rounded-lg flex-shrink-0 overflow-hidden">
+                    {React.cloneElement(upgrade.icon, { className: 'h-10 w-10' })}
+                    {iconEffectKey && (
+                      <div
+                        key={iconEffectKey}
+                        className="absolute inset-0 animate-shine-wipe pointer-events-none"
+                      />
+                    )}
+                </div>
+                <div className="flex-grow min-w-0">
+                    <h4 className="font-semibold text-lg text-slate-100 truncate">{upgrade.name}</h4>
+                    <p className="text-sm text-slate-400">{upgrade.description}</p>
+                    <div 
+                      className="relative mt-1 cursor-help w-fit"
+                      onMouseEnter={() => setIsCostHovered(true)}
+                      onMouseLeave={() => setIsCostHovered(false)}
+                    >
+                      <div className={`text-base font-semibold transition-all font-mono tracking-tight ${isMaxed ? 'text-green-400' : canAfford ? 'text-pink-400 animate-cost-glow' : 'text-pink-400'}`}>
+                          {isMaxed ? 'MAX' : `Cost: ${totalCost.toLocaleString()}`}
+                      </div>
+                      {!isMaxed && (
+                          <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-1 p-2 text-xs bg-slate-900 border border-slate-600 rounded-md text-slate-300 whitespace-nowrap transition-all duration-200 pointer-events-none ${isCostHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1'}`}>
+                              {buyAmount === 'max' ?
+                                  <span>Buys <strong className="font-mono">{levelsToBuy.toLocaleString()}</strong> level{levelsToBuy !== 1 ? 's' : ''}</span> :
+                                  <span>'Max' buys <strong className="font-mono">{maxLevelsToBuy.toLocaleString()}</strong> level{maxLevelsToBuy !== 1 ? 's' : ''}</span>
+                              }
+                          </div>
+                      )}
+                    </div>
+                </div>
             </div>
-            <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-1 p-2 text-xs bg-slate-900 border border-slate-600 rounded-md text-slate-300 whitespace-nowrap transition-all duration-200 pointer-events-none ${isCostHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1'}`}>
-                {buyAmount === 'max' ?
-                    <span>Buys <strong className="font-mono">{levelsToBuy.toLocaleString()}</strong> level{levelsToBuy !== 1 ? 's' : ''}</span> :
-                    <span>'Max' buys <strong className="font-mono">{maxLevelsToBuy.toLocaleString()}</strong> level{maxLevelsToBuy !== 1 ? 's' : ''}</span>
-                }
+
+            {/* Right/Bottom section */}
+            <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto flex-shrink-0">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-sm text-slate-400 font-medium">LVL</span>
+                  <span className="text-3xl font-bold text-slate-200 font-mono">
+                      {upgrade.level}
+                  </span>
+                  <span className="text-sm text-slate-400 font-medium">/{upgrade.maxLevel}</span>
+                </div>
+                <div className="w-[120px]">
+                    <button 
+                        onClick={handlePurchase}
+                        aria-label={`Purchase ${levelsToBuy} levels of ${upgrade.name}`}
+                        className={`w-full text-base font-bold py-3 px-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 active:scale-95 text-center
+                            ${canAfford && !isMaxed
+                                ? 'bg-pink-600 hover:bg-pink-700 text-white button-affordable-glow' 
+                                : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                            }`}
+                        disabled={!canAfford || levelsToBuy <= 0 || isMaxed}
+                    >
+                        {isMaxed ? 'MAX' : `Elaborar ${buyAmount === 'max' ? levelsToBuy : levelsToBuy}x`}
+                    </button>
+                </div>
             </div>
-          </div>
         </div>
-        <div className="text-right flex items-center gap-4 flex-shrink-0">
-             <div className="flex items-baseline gap-1">
-              <span className="text-sm text-slate-400 font-medium">LVL</span>
-              <span className="text-3xl font-bold text-slate-200 font-mono">
-                  {upgrade.level}
-              </span>
-            </div>
-             <div className="w-[120px]">
-                <button 
-                    onClick={handlePurchase}
-                    aria-label={`Purchase ${levelsToBuy} levels of ${upgrade.name}`}
-                    className={`w-full text-base font-bold py-3 px-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 active:scale-95 text-center
-                        ${canAfford 
-                            ? 'bg-pink-600 hover:bg-pink-700 text-white button-affordable-glow' 
-                            : 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                        }`}
-                    disabled={!canAfford || levelsToBuy <= 0}
-                >
-                    Elaborar <span className="font-mono">{buyAmount === 'max' ? levelsToBuy : buyAmount}x</span>
-                </button>
-             </div>
-        </div>
-      </div>
     </li>
   );
 };
@@ -193,33 +206,63 @@ interface PrestigeUpgradeItemProps {
     upgrade: PrestigeUpgrade;
     onPurchase: (id: string) => void;
     prestigePoints: number;
+    purchasedPrestigeUpgrades: Map<string, PrestigeUpgrade>;
 }
 
-const PrestigeUpgradeItem: React.FC<PrestigeUpgradeItemProps> = ({ upgrade, onPurchase, prestigePoints }) => {
+const PrestigeUpgradeItem: React.FC<PrestigeUpgradeItemProps> = ({ upgrade, onPurchase, prestigePoints, purchasedPrestigeUpgrades }) => {
     const cost = upgrade.cost(upgrade.level);
-    const canAfford = prestigePoints >= cost;
     const isMaxLevel = upgrade.maxLevel !== undefined && upgrade.level >= upgrade.maxLevel;
+
+    const requirement = upgrade.requires ? purchasedPrestigeUpgrades.get(upgrade.requires) : null;
+    const isRequirementMet = !upgrade.requires || (requirement && requirement.level > 0);
+    
+    const canAfford = prestigePoints >= cost && isRequirementMet;
 
     const handlePurchase = () => {
         if (canAfford && !isMaxLevel) {
             onPurchase(upgrade.id);
         }
     };
+    
+    if (!isRequirementMet) {
+        return (
+            <li className={`rounded-xl p-3 bg-slate-800/40 border border-slate-700/50 opacity-60`}>
+                <div className="w-full flex items-center gap-4 text-left">
+                    <div className="bg-slate-700/50 text-slate-500 p-3 rounded-lg flex-shrink-0">
+                        {React.cloneElement(upgrade.icon, { className: 'h-10 w-10' })}
+                    </div>
+                    <div className="flex-grow min-w-0">
+                        <h4 className="font-semibold text-lg text-slate-400 truncate">??????????</h4>
+                        <div className="text-sm text-slate-500 flex items-center gap-1 mt-1">
+                            <LockIcon className="h-4 w-4" />
+                            Requires '{requirement?.name || upgrade.requires}'
+                        </div>
+                    </div>
+                </div>
+            </li>
+        );
+    }
+
 
     return (
         <li className={`rounded-xl p-3 transition-all duration-200 bg-purple-900/40 hover:bg-purple-900/60 shadow-md hover:shadow-lg border ${canAfford && !isMaxLevel ? 'upgrade-affordable-glow border-purple-400/50' : 'border-purple-800/80'}`}>
-            <div className="w-full flex items-center gap-4 text-left">
-                <div className="bg-purple-500/10 text-purple-300 p-3 rounded-lg flex-shrink-0">
-                    {React.cloneElement(upgrade.icon, { className: 'h-10 w-10' })}
-                </div>
-                <div className="flex-grow min-w-0">
-                    <h4 className="font-semibold text-lg text-slate-100 truncate">{upgrade.name}</h4>
-                    <p className="text-sm text-slate-400">{upgrade.description(upgrade.level)}</p>
-                    <div className="text-base font-semibold text-purple-300 font-mono tracking-tight mt-1">
-                        Cost: {isMaxLevel ? "MAX" : `${cost.toLocaleString()} PP`}
+            <div className="flex flex-col sm:flex-row w-full items-start sm:items-center gap-3 text-left">
+                {/* Left/Top section */}
+                <div className="flex items-center gap-4 flex-grow min-w-0 w-full">
+                    <div className="bg-purple-500/10 text-purple-300 p-3 rounded-lg flex-shrink-0">
+                        {React.cloneElement(upgrade.icon, { className: 'h-10 w-10' })}
+                    </div>
+                    <div className="flex-grow min-w-0">
+                        <h4 className="font-semibold text-lg text-slate-100 truncate">{upgrade.name}</h4>
+                        <p className="text-sm text-slate-400">{upgrade.description(upgrade.level)}</p>
+                        <div className="text-base font-semibold text-purple-300 font-mono tracking-tight mt-1">
+                            Cost: {isMaxLevel ? "MAX" : `${cost.toLocaleString()} PP`}
+                        </div>
                     </div>
                 </div>
-                <div className="text-right flex items-center gap-4 flex-shrink-0">
+
+                {/* Right/Bottom section */}
+                <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto flex-shrink-0">
                     <div className="flex items-baseline gap-1">
                         <span className="text-sm text-slate-400 font-medium">LVL</span>
                         <span className="text-3xl font-bold text-slate-200 font-mono">
@@ -276,6 +319,11 @@ const UpgradeStore: React.FC<UpgradeStoreProps> = ({ upgrades, onPurchase, cycle
   });
   const [buyAmount, setBuyAmount] = useState<number | 'max'>(1);
   const newlyUnlockedRef = useRef<Set<string>>(new Set());
+
+  const purchasedPrestigeUpgradesMap = useMemo(() => 
+      new Map(prestigeUpgrades.map(p => [p.id, p])),
+      [prestigeUpgrades]
+  );
   
   useEffect(() => {
     const unlocked = new Set<string>();
@@ -402,13 +450,14 @@ const UpgradeStore: React.FC<UpgradeStoreProps> = ({ upgrades, onPurchase, cycle
 
       {activeTab === 'prestige' && (
         <ul className="space-y-3 flex-grow overflow-y-auto pr-2 -mr-2">
-            <p className="text-sm text-slate-400 p-2 text-center bg-slate-800/50 rounded-md mb-2">These upgrades are permanent and persist through prestiging.</p>
-            {prestigeUpgrades.map(upgrade => (
+            <p className="text-sm text-slate-400 p-2 text-center bg-slate-800/50 rounded-md mb-2">Purchase permanent upgrades. Some upgrades require others to be purchased first.</p>
+            {PRESTIGE_UPGRADES.map(upgrade => (
                 <PrestigeUpgradeItem
                     key={upgrade.id}
                     upgrade={upgrade}
                     onPurchase={onPurchasePrestige}
                     prestigePoints={prestigePoints}
+                    purchasedPrestigeUpgrades={purchasedPrestigeUpgradesMap}
                 />
             ))}
         </ul>

@@ -123,8 +123,8 @@ export const LightningIcon = (props?: React.SVGProps<SVGSVGElement>) => (
         <path d="M227.4,116.2,98.6,245a12,12,0,0,1-22-10.2V144H32a12,12,0,0,1-9.4-19.8L157.4,11a12,12,0,0,1,22,10.2V112h44.8A12,12,0,0,1,227.4,116.2Z"/>
     </svg>
 );
-export const LockIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 256 256">
+export const LockIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 256 256" {...props}>
         <path d="M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96v96a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96Z"/>
     </svg>
 );
@@ -144,99 +144,107 @@ export const StopwatchIcon = () => (
     </svg>
 );
 
+const UpgradeCapIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...props}><rect width="256" height="256" fill="none"/><polyline points="48 160 128 80 208 160" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><line x1="128" y1="80" x2="128" y2="224" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><line x1="80" y1="32" x2="176" y2="32" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/></svg>
+);
+
+const PowerIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...props}><rect width="256" height="256" fill="none"/><path d="M49.4,176A95.9,95.9,0,0,1,40.2,136H215.8a95.9,95.9,0,0,1-9.2,40" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M80,216a95.9,95.9,0,0,1-9.2-40" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M176,216a95.9,95.9,0,0,0,9.2-40" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M154.9,96l-14.2-64.4a8,8,0,0,0-15.4,0L111.1,96" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M176,136h21.8a95.9,95.9,0,0,0-9.2-40h-17" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M80,136H58.2a95.9,95.9,0,0,1,9.2-40h17" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/></svg>
+);
+
 
 export const UPGRADE_TIERS: UpgradeTier[] = [
   {
     name: "Alquimia Básica",
     unlockCondition: { type: 'none' },
     upgrades: [
-      { id: 'stirring_rod', name: 'Varilla Agitadora Encantada', description: '+1 esencia por agitación', baseCost: 50, costGrowth: 1.25, level: 0, type: 'click', power: 1, icon: <PotionIcon /> },
-      { id: 'self_stir_cauldron', name: 'Caldero Autorevolvedor', description: '+1 esencia por segundo', baseCost: 500, costGrowth: 1.28, level: 0, type: 'auto', power: 1, icon: <CauldronIcon /> },
+      { id: 'stirring_rod', name: 'Varilla Agitadora Encantada', description: '+1 esencia por agitación', baseCost: 50, costGrowth: 1.25, level: 0, type: 'click', power: 1, icon: <PotionIcon />, maxLevel: 100 },
+      { id: 'self_stir_cauldron', name: 'Caldero Autorevolvedor', description: '+1 esencia por segundo', baseCost: 500, costGrowth: 1.28, level: 0, type: 'auto', power: 1, icon: <CauldronIcon />, maxLevel: 100 },
     ]
   },
   {
     name: "Estudios de Herbolaria",
     unlockCondition: { type: 'totalLevels', requiredLevels: 10 },
     upgrades: [
-      { id: 'alchemist_wand', name: 'Varita de Alquimista', description: '+8 de esencia por agitación', baseCost: 5000, costGrowth: 1.30, level: 0, type: 'click', power: 8, icon: <PotionIcon /> },
-      { id: 'mystic_garden', name: 'Jardín de Hierbas Místicas', description: '+6 esencia por segundo', baseCost: 12000, costGrowth: 1.29, level: 0, type: 'auto', power: 6, icon: <MandrakeIcon /> },
+      { id: 'alchemist_wand', name: 'Varita de Alquimista', description: '+8 de esencia por agitación', baseCost: 5000, costGrowth: 1.30, level: 0, type: 'click', power: 8, icon: <PotionIcon />, maxLevel: 100 },
+      { id: 'mystic_garden', name: 'Jardín de Hierbas Místicas', description: '+6 esencia por segundo', baseCost: 12000, costGrowth: 1.29, level: 0, type: 'auto', power: 6, icon: <MandrakeIcon />, maxLevel: 100 },
     ]
   },
   {
     name: "Alquimia Celestial",
     unlockCondition: { type: 'totalLevels', requiredLevels: 10 },
     upgrades: [
-      { id: 'moon_tears', name: 'Tears of the Moon', description: '+500 esencia por segundo', baseCost: 3e6, costGrowth: 1.32, level: 0, type: 'auto', power: 500, icon: <MoonIcon /> },
-      { id: 'sunstone_catalyst', name: 'Sunstone Catalyst', description: '+750 esencia por segundo', baseCost: 4e6, costGrowth: 1.33, level: 0, type: 'auto', power: 750, icon: <SunIcon /> }
+      { id: 'moon_tears', name: 'Tears of the Moon', description: '+500 esencia por segundo', baseCost: 3e6, costGrowth: 1.32, level: 0, type: 'auto', power: 500, icon: <MoonIcon />, maxLevel: 100 },
+      { id: 'sunstone_catalyst', name: 'Sunstone Catalyst', description: '+750 esencia por segundo', baseCost: 4e6, costGrowth: 1.33, level: 0, type: 'auto', power: 750, icon: <SunIcon />, maxLevel: 100 }
     ]
   },
   {
     name: "Preparación Avanzada",
     unlockCondition: { type: 'totalLevels', requiredLevels: 25 },
     upgrades: [
-      { id: 'potion_lab', name: 'Laboratorio de Pociones', description: '+40 de esencia por segundo', baseCost: 150000, costGrowth: 1.30, level: 0, type: 'auto', power: 40, icon: <MortarAndPestleIcon /> },
+      { id: 'potion_lab', name: 'Laboratorio de Pociones', description: '+40 de esencia por segundo', baseCost: 150000, costGrowth: 1.30, level: 0, type: 'auto', power: 40, icon: <MortarAndPestleIcon />, maxLevel: 100 },
     ]
   },
   {
     name: "Transmutación",
     unlockCondition: { type: 'totalLevels', requiredLevels: 40 },
     upgrades: [
-      { id: 'infused_gloves', name: 'Guantes de Toque Infuso', description: '+100 por agitación', baseCost: 1e6, costGrowth: 1.35, level: 0, type: 'click', power: 100, icon: <PotionIcon /> },
-      { id: 'grimoire', name: 'Grimorio de Elaboración', description: '+150 de esencia por segundo', baseCost: 1.2e6, costGrowth: 1.31, level: 0, type: 'auto', power: 150, icon: <SpellbookIcon /> },
+      { id: 'infused_gloves', name: 'Guantes de Toque Infuso', description: '+100 por agitación', baseCost: 1e6, costGrowth: 1.35, level: 0, type: 'click', power: 100, icon: <PotionIcon />, maxLevel: 100 },
+      { id: 'grimoire', name: 'Grimorio de Elaboración', description: '+150 de esencia por segundo', baseCost: 1.2e6, costGrowth: 1.31, level: 0, type: 'auto', power: 150, icon: <SpellbookIcon />, maxLevel: 100 },
     ]
   },
   {
     name: "Adivinación",
     unlockCondition: { type: 'totalLevels', requiredLevels: 55 },
     upgrades: [
-        { id: 'scrying_pool', name: 'Piscina de Adivinación', description: '+200 de esencia por segundo', baseCost: 5e6, costGrowth: 1.32, level: 0, type: 'auto', power: 200, icon: <CrystalBallIcon /> },
+        { id: 'scrying_pool', name: 'Piscina de Adivinación', description: '+200 de esencia por segundo', baseCost: 5e6, costGrowth: 1.32, level: 0, type: 'auto', power: 200, icon: <CrystalBallIcon />, maxLevel: 100 },
     ]
   },
   {
     name: "Alquimia Etérea",
     unlockCondition: { type: 'totalLevels', requiredLevels: 70 },
     upgrades: [
-        { id: 'ethereal_portal', name: 'Portal Etéreo', description: '+1,200 esencia por segundo', baseCost: 6e7, costGrowth: 1.33, level: 0, type: 'auto', power: 1200, icon: <RuneStoneIcon /> },
+        { id: 'ethereal_portal', name: 'Portal Etéreo', description: '+1,200 esencia por segundo', baseCost: 6e7, costGrowth: 1.33, level: 0, type: 'auto', power: 1200, icon: <RuneStoneIcon />, maxLevel: 100 },
     ]
   },
   {
     name: "Alquimia Cósmica",
     unlockCondition: { type: 'totalLevels', requiredLevels: 90 },
     upgrades: [
-        { id: 'lunar_stir', name: 'Agitación Lunar', description: '+1,000 por agitación', baseCost: 7.5e7, costGrowth: 1.38, level: 0, type: 'click', power: 1000, icon: <MoonIcon /> },
-        { id: 'philosopher_stone', name: 'Piedra Filosofal', description: '+1,500 de esencia por segundo', baseCost: 9e7, costGrowth: 1.34, level: 0, type: 'auto', power: 1500, icon: <PhilosopherStoneIcon /> },
+        { id: 'lunar_stir', name: 'Agitación Lunar', description: '+1,000 por agitación', baseCost: 7.5e7, costGrowth: 1.38, level: 0, type: 'click', power: 1000, icon: <MoonIcon />, maxLevel: 100 },
+        { id: 'philosopher_stone', name: 'Piedra Filosofal', description: '+1,500 de esencia por segundo', baseCost: 9e7, costGrowth: 1.34, level: 0, type: 'auto', power: 1500, icon: <PhilosopherStoneIcon />, maxLevel: 100 },
     ]
   },
   {
     name: "Tecnología Arcana",
     unlockCondition: { type: 'totalLevels', requiredLevels: 120 },
     upgrades: [
-      { id: 'astral_foundry', name: 'Fundición Astral', description: '+12,000 EPS', baseCost: 1.5e9, costGrowth: 1.35, level: 0, type: 'auto', power: 12000, icon: <SunIcon /> },
-      { id: 'solar_touch', name: 'Toque Solar', description: '+10,000 por agitación', baseCost: 2e9, costGrowth: 1.39, level: 0, type: 'click', power: 10000, icon: <SunIcon /> },
+      { id: 'astral_foundry', name: 'Fundición Astral', description: '+12,000 EPS', baseCost: 1.5e9, costGrowth: 1.35, level: 0, type: 'auto', power: 12000, icon: <SunIcon />, maxLevel: 100 },
+      { id: 'solar_touch', name: 'Toque Solar', description: '+10,000 por agitación', baseCost: 2e9, costGrowth: 1.39, level: 0, type: 'click', power: 10000, icon: <SunIcon />, maxLevel: 100 },
     ]
   },
   {
     name: "Dominio de la Creación",
     unlockCondition: { type: 'totalLevels', requiredLevels: 150 },
     upgrades: [
-      { id: 'world_tree', name: 'Savia del Árbol del Mundo', description: '+80,000 EPS', baseCost: 2.5e10, costGrowth: 1.36, level: 0, type: 'auto', power: 80000, icon: <TreeIcon /> },
-      { id: 'ley_lines', name: 'Aprovechar Líneas Ley', description: '+150,000 EPS', baseCost: 5e10, costGrowth: 1.37, level: 0, type: 'auto', power: 150000, icon: <AmuletIcon /> },
+      { id: 'world_tree', name: 'Savia del Árbol del Mundo', description: '+80,000 EPS', baseCost: 2.5e10, costGrowth: 1.36, level: 0, type: 'auto', power: 80000, icon: <TreeIcon />, maxLevel: 100 },
+      { id: 'ley_lines', name: 'Aprovechar Líneas Ley', description: '+150,000 EPS', baseCost: 5e10, costGrowth: 1.37, level: 0, type: 'auto', power: 150000, icon: <AmuletIcon />, maxLevel: 100 },
     ]
   },
   {
     name: "Maestría Elemental",
     unlockCondition: { type: 'totalLevels', requiredLevels: 180 },
     upgrades: [
-      { id: 'elemental_forge', name: 'Forja Elemental', description: '+1.2 Millones de EPS', baseCost: 8e11, costGrowth: 1.38, level: 0, type: 'auto', power: 1.2e6, icon: <ElementalIcon /> },
-      { id: 'galaxy_bottle', name: 'Galaxia en una Botella', description: '+2.5 Millones de EPS', baseCost: 1.5e12, costGrowth: 1.39, level: 0, type: 'auto', power: 2.5e6, icon: <GalaxyIcon /> },
+      { id: 'elemental_forge', name: 'Forja Elemental', description: '+1.2 Millones de EPS', baseCost: 8e11, costGrowth: 1.38, level: 0, type: 'auto', power: 1.2e6, icon: <ElementalIcon />, maxLevel: 100 },
+      { id: 'galaxy_bottle', name: 'Galaxia en una Botella', description: '+2.5 Millones de EPS', baseCost: 1.5e12, costGrowth: 1.39, level: 0, type: 'auto', power: 2.5e6, icon: <GalaxyIcon />, maxLevel: 100 },
     ]
   },
   {
     name: "Poder Absoluto",
     unlockCondition: { type: 'totalLevels', requiredLevels: 220 },
     upgrades: [
-      { id: 'nexus_of_reality', name: 'Nexo de la Realidad', description: '+50 Millones de EPS', baseCost: 3e14, costGrowth: 1.40, level: 0, type: 'auto', power: 5e7, icon: <InfinityIcon /> },
-      { id: 'touch_of_creation', name: 'Toque de la Creación', description: '+1 Billón por agitación', baseCost: 1e15, costGrowth: 1.45, level: 0, type: 'click', power: 1e9, icon: <InfinityIcon /> },
+      { id: 'nexus_of_reality', name: 'Nexo de la Realidad', description: '+50 Millones de EPS', baseCost: 3e14, costGrowth: 1.40, level: 0, type: 'auto', power: 5e7, icon: <InfinityIcon />, maxLevel: 100 },
+      { id: 'touch_of_creation', name: 'Toque de la Creación', description: '+1 Billón por agitación', baseCost: 1e15, costGrowth: 1.45, level: 0, type: 'click', power: 1e9, icon: <InfinityIcon />, maxLevel: 100 },
     ]
   }
 ];
@@ -291,7 +299,8 @@ export const calculatePrestigePoints = (totalCyclesEarned: number): number => {
     return Math.floor(Math.pow(totalCyclesEarned / 1e12, 0.4));
 };
 
-export const INITIAL_PRESTIGE_UPGRADES: PrestigeUpgrade[] = [
+export const PRESTIGE_UPGRADES: PrestigeUpgrade[] = [
+    // General Boosts
     {
         id: 'perm_boost_1',
         name: 'Fuente de Maná Permanente',
@@ -320,7 +329,40 @@ export const INITIAL_PRESTIGE_UPGRADES: PrestigeUpgrade[] = [
         maxLevel: 20,
         bonus: { type: 'cps_to_click_synergy', value: 0.001 },
         icon: <PlusCircleIcon />
-    }
+    },
+    // Ascension Tree
+    {
+        id: 'ascension_1',
+        name: 'Ascensión de Aprendiz',
+        description: (level) => `Aumenta el nivel máximo de las mejoras de Alquimia Básica en +50.`,
+        cost: () => 10,
+        level: 0,
+        maxLevel: 1,
+        bonus: { type: 'increase_max_level', upgradeIds: ['stirring_rod', 'self_stir_cauldron'], amount: 50 },
+        icon: <UpgradeCapIcon />,
+    },
+    {
+        id: 'power_1',
+        name: 'Poder de Agitación',
+        description: (level) => `La Varilla Agitadora es un 25% más potente.`,
+        cost: () => 15,
+        level: 0,
+        maxLevel: 1,
+        requires: 'ascension_1',
+        bonus: { type: 'increase_power_multiplier', upgradeIds: ['stirring_rod'], multiplier: 1.25 },
+        icon: <PowerIcon />,
+    },
+    {
+        id: 'ascension_2',
+        name: 'Ascensión de Herbolaria',
+        description: (level) => `Aumenta el nivel máximo de las mejoras de Herbolaria en +50.`,
+        cost: () => 20,
+        level: 0,
+        maxLevel: 1,
+        requires: 'ascension_1',
+        bonus: { type: 'increase_max_level', upgradeIds: ['alchemist_wand', 'mystic_garden'], amount: 50 },
+        icon: <UpgradeCapIcon />,
+    },
 ];
 
 // Daily Rewards Config

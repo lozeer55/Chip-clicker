@@ -17,8 +17,8 @@ import ChallengesModal from './components/ChallengesModal';
 import ChallengeTracker from './components/ChallengeTracker';
 import ChallengeToast from './components/ChallengeToast';
 import type { Upgrade, FloatingNumberType, GameSettings, PlayerStats, Achievement, ActiveBoost, MilestoneToastInfo, AchievementToastInfo, GoldenDropletType, SaveState, MobileView, PrestigeUpgrade, Challenge, ActiveChallengeState, ChallengeToastInfo } from './types';
-import { INITIAL_UPGRADES, SettingsIcon, MILESTONES, ACHIEVEMENTS, AchievementIcon, ChartBarIcon, GOLDEN_DROPLET_LIFESPAN, GOLDEN_DROPLET_SPAWN_INTERVAL_MIN, GOLDEN_DROPLET_SPAWN_INTERVAL_MAX, GOLDEN_DROPLET_BOOST_MULTIPLIER, GOLDEN_DROPLET_BOOST_DURATION, INITIAL_PRESTIGE_UPGRADES, calculatePrestigePoints, DAILY_REWARDS, CHALLENGES, StopwatchIcon } from './constants';
-import { backgroundMusic, clickSound, milestoneSound, purchaseSound, achievementSound, goldenChipSpawnSound, goldenChipClickSound } from './sounds';
+import { INITIAL_UPGRADES, SettingsIcon, MILESTONES, ACHIEVEMENTS, AchievementIcon, ChartBarIcon, GOLDEN_DROPLET_LIFESPAN, GOLDEN_DROPLET_SPAWN_INTERVAL_MIN, GOLDEN_DROPLET_SPAWN_INTERVAL_MAX, GOLDEN_DROPLET_BOOST_MULTIPLIER, GOLDEN_DROPLET_BOOST_DURATION, PRESTIGE_UPGRADES, calculatePrestigePoints, DAILY_REWARDS, CHALLENGES, StopwatchIcon } from './constants';
+import { backgroundMusic, clickSound, milestoneSound, purchaseSound, achievementSound, goldenChipSpawnSound, goldenChipClickSound, prestigeSound } from './sounds';
 
 const SAVE_KEY = 'elixirClickerSave';
 const SETTINGS_KEY = 'elixirClickerSettings';
@@ -39,17 +39,47 @@ const loadGame = (): {
   try {
     const savedData = localStorage.getItem(SAVE_KEY);
     if (savedData) {
-      const { cycles, upgrades: savedUpgrades, milestoneIndex, stats, unlockedAchievements, completedChallenges, prestigePoints, prestigeUpgrades: savedPrestigeUpgrades, loginStreak, lastLoginDate } = JSON.parse(savedData);
+      // FIX: Type the parsed save data to avoid properties being inferred as `any` or `unknown`.
+      const { cycles, upgrades: savedUpgrades, milestoneIndex, stats, unlockedAchievements, completedChallenges, prestigePoints, prestigeUpgrades: savedPrestigeUpgrades, loginStreak, lastLoginDate }: Partial<SaveState> = JSON.parse(savedData);
       
-      const mergedUpgrades = INITIAL_UPGRADES.map(initialUpgrade => {
-        const savedUpgrade = savedUpgrades.find((u: { id: string, level: number }) => u.id === initialUpgrade.id);
-        return savedUpgrade ? { ...initialUpgrade, level: savedUpgrade.level } : initialUpgrade;
+      let upgradesWithLevels = INITIAL_UPGRADES.map(initialUpgrade => {
+        // FIX: Added optional chaining as savedUpgrades can be undefined with a partial save state.
+        const savedUpgrade = savedUpgrades?.find((u) => u.id === initialUpgrade.id);
+        return savedUpgrade ? { ...initialUpgrade, level: savedUpgrade.level } : { ...initialUpgrade, level: 0 };
       });
       
-      const mergedPrestigeUpgrades = INITIAL_PRESTIGE_UPGRADES.map(initialUpgrade => {
-        const savedUpgrade = savedPrestigeUpgrades?.find((u: { id: string, level: number }) => u.id === initialUpgrade.id);
-        return savedUpgrade ? { ...initialUpgrade, level: savedUpgrade.level } : initialUpgrade;
-      });
+      const savedPrestigeUpgradesMap = new Map(
+        (savedPrestigeUpgrades || []).map((u) => [u.id, u.level])
+      );
+      const prestigeUpgradesWithLevels = PRESTIGE_UPGRADES.map(initialUpgrade => ({
+        ...initialUpgrade,
+        level: savedPrestigeUpgradesMap.get(initialUpgrade.id) || 0,
+      }));
+      
+      // Apply prestige bonuses to the initial upgrades
+      for (const pUpgrade of prestigeUpgradesWithLevels) {
+          // FIX: `pUpgrade.level` is now correctly inferred as a number, allowing this comparison.
+          if (pUpgrade.level > 0) {
+              const { bonus } = pUpgrade;
+              // FIX: `pUpgrade.level` is now correctly inferred as a number, allowing this comparison.
+              for (let i = 0; i < pUpgrade.level; i++) {
+                  if (bonus.type === 'increase_max_level') {
+                      upgradesWithLevels = upgradesWithLevels.map(u => 
+                          bonus.upgradeIds.includes(u.id)
+                              ? { ...u, maxLevel: u.maxLevel + bonus.amount }
+                              : u
+                      );
+                  } else if (bonus.type === 'increase_power_multiplier') {
+                       upgradesWithLevels = upgradesWithLevels.map(u => 
+                          bonus.upgradeIds.includes(u.id)
+                              ? { ...u, power: u.power * bonus.multiplier }
+                              : u
+                      );
+                  }
+              }
+          }
+      }
+
 
       const defaultStats: PlayerStats = { totalClicks: 0, totalCyclesEarned: 0, xp: 0, totalPrestigePointsEver: 0, totalPrestiges: 0, goldenDropletsClicked: 0 };
       const loadedStats = {
@@ -63,13 +93,14 @@ const loadGame = (): {
 
       return { 
         initialCycles: cycles || 0, 
-        initialUpgrades: mergedUpgrades, 
+        initialUpgrades: upgradesWithLevels, 
         initialMilestoneIndex: milestoneIndex || 0,
         initialStats: { ...defaultStats, ...loadedStats },
         initialUnlockedAchievements: new Set(unlockedAchievements || []),
         initialCompletedChallenges: new Set(completedChallenges || []),
         initialPrestigePoints: prestigePoints || 0,
-        initialPrestigeUpgrades: mergedPrestigeUpgrades || INITIAL_PRESTIGE_UPGRADES,
+        // FIX: `prestigeUpgradesWithLevels` is now correctly typed as PrestigeUpgrade[], satisfying the return type.
+        initialPrestigeUpgrades: prestigeUpgradesWithLevels,
         initialLoginStreak: loginStreak || 0,
         initialLastLoginDate: lastLoginDate || null,
       };
@@ -79,13 +110,13 @@ const loadGame = (): {
   }
   return { 
       initialCycles: 0, 
-      initialUpgrades: INITIAL_UPGRADES, 
+      initialUpgrades: INITIAL_UPGRADES.map(u => ({...u, level: 0})), 
       initialMilestoneIndex: 0,
       initialStats: { totalClicks: 0, totalCyclesEarned: 0, xp: 0, totalPrestigePointsEver: 0, totalPrestiges: 0, goldenDropletsClicked: 0 },
       initialUnlockedAchievements: new Set(),
       initialCompletedChallenges: new Set(),
       initialPrestigePoints: 0,
-      initialPrestigeUpgrades: INITIAL_PRESTIGE_UPGRADES,
+      initialPrestigeUpgrades: PRESTIGE_UPGRADES.map(u => ({...u, level: 0})),
       initialLoginStreak: 0,
       initialLastLoginDate: null,
   };
@@ -543,7 +574,7 @@ const App: React.FC = () => {
 
   const handlePurchaseUpgrade = useCallback((upgradeId: string, levelsToBuy: number) => {
     const upgrade = upgrades.find(u => u.id === upgradeId);
-    if (!upgrade || levelsToBuy <= 0) return;
+    if (!upgrade || levelsToBuy <= 0 || upgrade.level + levelsToBuy > upgrade.maxLevel) return;
 
     let totalCost = 0;
     const { baseCost, costGrowth, level: currentLevel } = upgrade;
@@ -569,15 +600,39 @@ const App: React.FC = () => {
     const upgrade = prestigeUpgrades.find(u => u.id === upgradeId);
     if (!upgrade) return;
 
+    // Check dependency
+    if (upgrade.requires) {
+        const requiredUpgrade = prestigeUpgrades.find(p => p.id === upgrade.requires);
+        if (!requiredUpgrade || requiredUpgrade.level === 0) {
+            return; // Requirement not met
+        }
+    }
+
     const cost = upgrade.cost(upgrade.level);
     if (prestigePoints >= cost && (!upgrade.maxLevel || upgrade.level < upgrade.maxLevel)) {
         playSound(purchaseSound);
         setPrestigePoints(prev => prev - cost);
-        setPrestigeUpgrades(prevUpgrades =>
-            prevUpgrades.map(u =>
-                u.id === upgradeId ? { ...u, level: u.level + 1 } : u
-            )
+        
+        const newPrestigeUpgrades = prestigeUpgrades.map(u =>
+            u.id === upgradeId ? { ...u, level: u.level + 1 } : u
         );
+        setPrestigeUpgrades(newPrestigeUpgrades);
+
+        // Apply bonus immediately
+        const { bonus } = upgrade;
+        if (bonus.type === 'increase_max_level') {
+            setUpgrades(currentUpgrades => currentUpgrades.map(u => 
+                bonus.upgradeIds.includes(u.id) 
+                    ? { ...u, maxLevel: u.maxLevel + bonus.amount }
+                    : u
+            ));
+        } else if (bonus.type === 'increase_power_multiplier') {
+            setUpgrades(currentUpgrades => currentUpgrades.map(u => 
+                bonus.upgradeIds.includes(u.id)
+                    ? { ...u, power: u.power * bonus.multiplier }
+                    : u
+            ));
+        }
     }
   }, [prestigePoints, prestigeUpgrades, playSound]);
 
@@ -597,7 +652,31 @@ const App: React.FC = () => {
         }, 0);
 
         setCycles(startingCycles);
-        setUpgrades(INITIAL_UPGRADES.map(u => ({ ...u, level: 0 })));
+        // Reset upgrades but keep ascended properties (maxLevel, power)
+        let resetUpgrades = INITIAL_UPGRADES.map(u => ({ ...u, level: 0 }));
+        for (const pUpgrade of prestigeUpgrades) {
+          if (pUpgrade.level > 0) {
+              const { bonus } = pUpgrade;
+              for (let i = 0; i < pUpgrade.level; i++) {
+                  if (bonus.type === 'increase_max_level') {
+                      resetUpgrades = resetUpgrades.map(u => 
+                          bonus.upgradeIds.includes(u.id)
+                              ? { ...u, maxLevel: u.maxLevel + bonus.amount }
+                              : u
+                      );
+                  } else if (bonus.type === 'increase_power_multiplier') {
+                       resetUpgrades = resetUpgrades.map(u => 
+                          bonus.upgradeIds.includes(u.id)
+                              ? { ...u, power: u.power * bonus.multiplier }
+                              : u
+                      );
+                  }
+              }
+          }
+        }
+        setUpgrades(resetUpgrades);
+
+
         setCurrentMilestoneIndex(0);
         setPlayerStats(prev => ({
             ...prev,
@@ -611,7 +690,7 @@ const App: React.FC = () => {
         setActiveBoosts([]);
         setFloatingNumbers([]);
         
-        playSound(milestoneSound);
+        playSound(prestigeSound);
     }
   }, [playerStats.totalCyclesEarned, prestigeUpgrades, playSound]);
 
@@ -709,25 +788,48 @@ const App: React.FC = () => {
   const handleLoadState = useCallback((loadedState: SaveState) => {
       if (!loadedState) return;
       try {
-        setCycles(loadedState.cycles);
-        const mergedUpgrades = INITIAL_UPGRADES.map(initialUpgrade => {
-            const savedUpgrade = loadedState.upgrades.find(u => u.id === initialUpgrade.id);
-            return savedUpgrade ? { ...initialUpgrade, level: savedUpgrade.level } : initialUpgrade;
+        const { cycles, upgrades: savedUpgrades, milestoneIndex, stats, unlockedAchievements, completedChallenges, prestigePoints, prestigeUpgrades: savedPrestigeUpgrades, loginStreak, lastLoginDate } = loadedState;
+        
+        let upgradesWithLevels = INITIAL_UPGRADES.map(initialUpgrade => {
+            const savedUpgrade = savedUpgrades.find(u => u.id === initialUpgrade.id);
+            return savedUpgrade ? { ...initialUpgrade, level: savedUpgrade.level } : { ...initialUpgrade, level: 0 };
         });
-        const mergedPrestigeUpgrades = INITIAL_PRESTIGE_UPGRADES.map(initialUpgrade => {
-            const savedUpgrade = loadedState.prestigeUpgrades?.find(u => u.id === initialUpgrade.id);
-            return savedUpgrade ? { ...initialUpgrade, level: savedUpgrade.level } : initialUpgrade;
-        });
+        
+        const savedPrestigeUpgradesMap = new Map(
+            (savedPrestigeUpgrades || []).map(u => [u.id, u.level])
+        );
+        const prestigeUpgradesWithLevels = PRESTIGE_UPGRADES.map(initialUpgrade => ({
+            ...initialUpgrade,
+            level: savedPrestigeUpgradesMap.get(initialUpgrade.id) || 0,
+        }));
 
-        setUpgrades(mergedUpgrades);
-        setCurrentMilestoneIndex(loadedState.milestoneIndex);
-        setPlayerStats(loadedState.stats);
-        setUnlockedAchievements(new Set(loadedState.unlockedAchievements));
-        setCompletedChallenges(new Set(loadedState.completedChallenges || []));
-        setPrestigePoints(loadedState.prestigePoints || 0);
-        setPrestigeUpgrades(mergedPrestigeUpgrades || INITIAL_PRESTIGE_UPGRADES);
-        setLoginStreak(loadedState.loginStreak || 0);
-        setLastLoginDate(loadedState.lastLoginDate || null);
+        for (const pUpgrade of prestigeUpgradesWithLevels) {
+            if (pUpgrade.level > 0) {
+                const { bonus } = pUpgrade;
+                for (let i = 0; i < pUpgrade.level; i++) {
+                    if (bonus.type === 'increase_max_level') {
+                        upgradesWithLevels = upgradesWithLevels.map(u => 
+                            bonus.upgradeIds.includes(u.id) ? { ...u, maxLevel: u.maxLevel + bonus.amount } : u
+                        );
+                    } else if (bonus.type === 'increase_power_multiplier') {
+                         upgradesWithLevels = upgradesWithLevels.map(u => 
+                            bonus.upgradeIds.includes(u.id) ? { ...u, power: u.power * bonus.multiplier } : u
+                        );
+                    }
+                }
+            }
+        }
+        
+        setCycles(cycles);
+        setUpgrades(upgradesWithLevels);
+        setCurrentMilestoneIndex(milestoneIndex);
+        setPlayerStats(stats);
+        setUnlockedAchievements(new Set(unlockedAchievements));
+        setCompletedChallenges(new Set(completedChallenges || []));
+        setPrestigePoints(prestigePoints || 0);
+        setPrestigeUpgrades(prestigeUpgradesWithLevels);
+        setLoginStreak(loginStreak || 0);
+        setLastLoginDate(lastLoginDate || null);
 
         console.log("Game state loaded.");
       } catch (e) {
@@ -899,21 +1001,6 @@ const App: React.FC = () => {
 
       {/* Mobile Layout */}
       <main className="lg:hidden w-full flex-grow p-4 flex flex-col min-h-0">
-        <div className="flex-shrink-0 mb-4">
-            {activeChallenge ? (
-                <ChallengeTracker
-                    activeChallenge={activeChallenge}
-                    cycles={cycles}
-                    upgrades={upgrades}
-                    onAbandon={handleAbandonChallenge}
-                />
-             ) : (
-                <MilestoneTracker 
-                    currentMilestone={currentMilestone}
-                    playerStats={playerStats}
-                />
-             )}
-        </div>
         <div className="flex-grow min-h-0">
             {activeMobileView === 'main' && (
                 <GameArea
@@ -938,6 +1025,21 @@ const App: React.FC = () => {
                     prestigeUpgrades={prestigeUpgrades}
                     onPurchasePrestige={handlePurchasePrestigeUpgrade}
                  />
+            )}
+            {activeMobileView === 'progress' && (
+                activeChallenge ? (
+                    <ChallengeTracker
+                        activeChallenge={activeChallenge}
+                        cycles={cycles}
+                        upgrades={upgrades}
+                        onAbandon={handleAbandonChallenge}
+                    />
+                 ) : (
+                    <MilestoneTracker 
+                        currentMilestone={currentMilestone}
+                        playerStats={playerStats}
+                    />
+                 )
             )}
         </div>
       </main>
