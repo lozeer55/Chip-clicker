@@ -746,23 +746,35 @@ const App: React.FC = () => {
         );
         setPrestigeUpgrades(newPrestigeUpgrades);
 
-        // Apply bonus immediately
-        const { bonus } = upgrade;
-        if (bonus.type === 'increase_max_level') {
-            setUpgrades(currentUpgrades => currentUpgrades.map(u => 
-                bonus.upgradeIds.includes(u.id) 
-                    ? { ...u, maxLevel: u.maxLevel + bonus.amount }
-                    : u
-            ));
-        } else if (bonus.type === 'increase_power_multiplier') {
-            setUpgrades(currentUpgrades => currentUpgrades.map(u => 
-                bonus.upgradeIds.includes(u.id)
-                    ? { ...u, power: u.power * bonus.multiplier }
-                    : u
-            ));
+        // --- Start of Bonus Recalculation ---
+        // Start with base upgrades, but preserve current levels
+        let recalculatedUpgrades = INITIAL_UPGRADES.map(initialUpg => {
+            const currentUpg = upgrades.find(u => u.id === initialUpg.id);
+            return { ...initialUpg, level: currentUpg ? currentUpg.level : 0 };
+        });
+
+        // Apply ALL bonuses from the new prestige state
+        for (const pUpgrade of newPrestigeUpgrades) {
+            if (pUpgrade.level > 0) {
+                const { bonus } = pUpgrade;
+                for (let i = 0; i < pUpgrade.level; i++) {
+                    if (bonus.type === 'increase_max_level') {
+                        recalculatedUpgrades = recalculatedUpgrades.map(u =>
+                            bonus.upgradeIds.includes(u.id) ? { ...u, maxLevel: u.maxLevel + bonus.amount } : u
+                        );
+                    } else if (bonus.type === 'increase_power_multiplier') {
+                        recalculatedUpgrades = recalculatedUpgrades.map(u =>
+                            bonus.upgradeIds.includes(u.id) ? { ...u, power: u.power * bonus.multiplier } : u
+                        );
+                    }
+                }
+            }
         }
+        
+        setUpgrades(recalculatedUpgrades);
+        // --- End of Bonus Recalculation ---
     }
-  }, [prestigePoints, prestigeUpgrades, playSound]);
+  }, [prestigePoints, prestigeUpgrades, upgrades, playSound]);
 
   const handlePrestige = useCallback(() => {
     const pointsGained = calculatePrestigePoints(playerStats.totalCyclesEarned);
