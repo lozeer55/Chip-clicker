@@ -36,33 +36,24 @@ type Notification =
   | ({ type: 'challenge' } & ChallengeToastInfo)
   | ({ type: 'event' } & EventToastInfo);
 
-// Load game state from localStorage
-const loadGame = (): { 
-    initialCycles: number; 
-    initialUpgrades: Upgrade[]; 
-    initialMilestoneIndex: number;
-    initialStats: PlayerStats;
-    initialUnlockedAchievements: Set<string>;
-    initialCompletedChallenges: Set<string>;
-    initialPrestigePoints: number;
-    initialPrestigeUpgrades: PrestigeUpgrade[];
-    initialLoginStreak: number;
-    initialLastLoginDate: string | null;
-} => {
+// A single, robust function to get the initial state from storage or defaults.
+const getInitialState = () => {
   try {
     const savedData = localStorage.getItem(SAVE_KEY);
     if (savedData) {
-      // FIX: Type the parsed save data to avoid properties being inferred as `any` or `unknown`.
-      const { cycles, upgrades: savedUpgrades, milestoneIndex, stats, unlockedAchievements, completedChallenges, prestigePoints, prestigeUpgrades: savedPrestigeUpgrades, loginStreak, lastLoginDate }: Partial<SaveState> = JSON.parse(savedData);
+      const parsed: Partial<SaveState> = JSON.parse(savedData);
       
       let upgradesWithLevels = INITIAL_UPGRADES.map(initialUpgrade => {
-        // FIX: Added optional chaining as savedUpgrades can be undefined with a partial save state.
-        const savedUpgrade = savedUpgrades?.find((u) => u.id === initialUpgrade.id);
-        return savedUpgrade ? { ...initialUpgrade, level: savedUpgrade.level, isUnlocked: savedUpgrade.isUnlocked ?? !initialUpgrade.isSecret } : { ...initialUpgrade, level: 0, isUnlocked: !initialUpgrade.isSecret };
+        const savedUpgrade = parsed.upgrades?.find((u) => u.id === initialUpgrade.id);
+        return { 
+          ...initialUpgrade, 
+          level: savedUpgrade?.level || 0, 
+          isUnlocked: savedUpgrade?.isUnlocked ?? !initialUpgrade.isSecret 
+        };
       });
       
       const savedPrestigeUpgradesMap = new Map(
-        (savedPrestigeUpgrades || []).map((u) => [u.id, u.level])
+        (parsed.prestigeUpgrades || []).map((u) => [u.id, u.level])
       );
       const prestigeUpgradesWithLevels = PRESTIGE_UPGRADES.map(initialUpgrade => ({
         ...initialUpgrade,
@@ -71,10 +62,8 @@ const loadGame = (): {
       
       // Apply prestige bonuses to the initial upgrades
       for (const pUpgrade of prestigeUpgradesWithLevels) {
-          // FIX: `pUpgrade.level` is now correctly inferred as a number, allowing this comparison.
           if (pUpgrade.level > 0) {
               const { bonus } = pUpgrade;
-              // FIX: `pUpgrade.level` is now correctly inferred as a number, allowing this comparison.
               for (let i = 0; i < pUpgrade.level; i++) {
                   if (bonus.type === 'increase_max_level') {
                       upgradesWithLevels = upgradesWithLevels.map(u => 
@@ -97,47 +86,41 @@ const loadGame = (): {
           }
       }
 
-
       const defaultStats: PlayerStats = { totalClicks: 0, totalCyclesEarned: 0, xp: 0, totalPrestigePointsEver: 0, totalPrestiges: 0, goldenDropletsClicked: 0 };
-      const loadedStats = {
-          totalClicks: stats?.totalClicks || 0,
-          totalCyclesEarned: stats?.totalCyclesEarned || 0,
-          xp: stats?.xp || 0,
-          totalPrestigePointsEver: stats?.totalPrestigePointsEver || 0,
-          totalPrestiges: stats?.totalPrestiges || 0,
-          goldenDropletsClicked: stats?.goldenDropletsClicked || 0,
-      };
 
       return { 
-        initialCycles: cycles || 0, 
-        initialUpgrades: upgradesWithLevels, 
-        initialMilestoneIndex: milestoneIndex || 0,
-        initialStats: { ...defaultStats, ...loadedStats },
-        initialUnlockedAchievements: new Set(unlockedAchievements || []),
-        initialCompletedChallenges: new Set(completedChallenges || []),
-        initialPrestigePoints: prestigePoints || 0,
-        // FIX: `prestigeUpgradesWithLevels` is now correctly typed as PrestigeUpgrade[], satisfying the return type.
-        initialPrestigeUpgrades: prestigeUpgradesWithLevels,
-        initialLoginStreak: loginStreak || 0,
-        initialLastLoginDate: lastLoginDate || null,
+        cycles: parsed.cycles || 0, 
+        upgrades: upgradesWithLevels, 
+        milestoneIndex: parsed.milestoneIndex || 0,
+        stats: { ...defaultStats, ...(parsed.stats || {}) },
+        unlockedAchievements: new Set(parsed.unlockedAchievements || []),
+        completedChallenges: new Set(parsed.completedChallenges || []),
+        prestigePoints: parsed.prestigePoints || 0,
+        prestigeUpgrades: prestigeUpgradesWithLevels,
+        loginStreak: parsed.loginStreak || 0,
+        lastLoginDate: parsed.lastLoginDate || null,
       };
     }
   } catch (error) {
-    console.error("Failed to load saved game:", error);
+    console.error("Failed to load saved game, starting fresh:", error);
+    localStorage.removeItem(SAVE_KEY); // Clear corrupted save
   }
+
+  // Return default state if no save file or if loading failed
   return { 
-      initialCycles: 0, 
-      initialUpgrades: INITIAL_UPGRADES.map(u => ({...u, level: 0, isUnlocked: !u.isSecret})), 
-      initialMilestoneIndex: 0,
-      initialStats: { totalClicks: 0, totalCyclesEarned: 0, xp: 0, totalPrestigePointsEver: 0, totalPrestiges: 0, goldenDropletsClicked: 0 },
-      initialUnlockedAchievements: new Set(),
-      initialCompletedChallenges: new Set(),
-      initialPrestigePoints: 0,
-      initialPrestigeUpgrades: PRESTIGE_UPGRADES.map(u => ({...u, level: 0})),
-      initialLoginStreak: 0,
-      initialLastLoginDate: null,
+      cycles: 0, 
+      upgrades: INITIAL_UPGRADES.map(u => ({...u, level: 0, isUnlocked: !u.isSecret})), 
+      milestoneIndex: 0,
+      stats: { totalClicks: 0, totalCyclesEarned: 0, xp: 0, totalPrestigePointsEver: 0, totalPrestiges: 0, goldenDropletsClicked: 0 },
+      unlockedAchievements: new Set<string>(),
+      completedChallenges: new Set<string>(),
+      prestigePoints: 0,
+      prestigeUpgrades: PRESTIGE_UPGRADES.map(u => ({...u, level: 0})),
+      loginStreak: 0,
+      lastLoginDate: null,
   };
 };
+
 
 // Load settings from localStorage
 const loadSettings = (): GameSettings => {
@@ -171,10 +154,10 @@ const loadSettings = (): GameSettings => {
 
 
 const App: React.FC = () => {
-  const { initialCycles, initialUpgrades, initialMilestoneIndex, initialStats, initialUnlockedAchievements, initialCompletedChallenges, initialPrestigePoints, initialPrestigeUpgrades, initialLoginStreak, initialLastLoginDate } = useMemo(() => loadGame(), []);
+  const [initialState] = useState(getInitialState);
   
-  const [cycles, setCycles] = useState<number>(initialCycles);
-  const [upgrades, setUpgrades] = useState<Upgrade[]>(initialUpgrades);
+  const [cycles, setCycles] = useState<number>(initialState.cycles);
+  const [upgrades, setUpgrades] = useState<Upgrade[]>(initialState.upgrades);
   const [floatingNumbers, setFloatingNumbers] = useState<FloatingNumberType[]>([]);
   const [settings, setSettings] = useState<GameSettings>(loadSettings);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -183,21 +166,21 @@ const App: React.FC = () => {
   const [isChallengesOpen, setIsChallengesOpen] = useState(false);
   const [isPrestigeModalOpen, setIsPrestigeModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
-  const [currentMilestoneIndex, setCurrentMilestoneIndex] = useState<number>(initialMilestoneIndex);
+  const [currentMilestoneIndex, setCurrentMilestoneIndex] = useState<number>(initialState.milestoneIndex);
   const [activeBoosts, setActiveBoosts] = useState<ActiveBoost[]>([]);
   const [notificationQueue, setNotificationQueue] = useState<Notification[]>([]);
   const [activeNotification, setActiveNotification] = useState<Notification | null>(null);
-  const [playerStats, setPlayerStats] = useState<PlayerStats>(initialStats);
-  const [unlockedAchievements, setUnlockedAchievements] = useState<Set<string>>(initialUnlockedAchievements);
-  const [completedChallenges, setCompletedChallenges] = useState<Set<string>>(initialCompletedChallenges);
+  const [playerStats, setPlayerStats] = useState<PlayerStats>(initialState.stats);
+  const [unlockedAchievements, setUnlockedAchievements] = useState<Set<string>>(initialState.unlockedAchievements);
+  const [completedChallenges, setCompletedChallenges] = useState<Set<string>>(initialState.completedChallenges);
   const [goldenDroplets, setGoldenDroplets] = useState<GoldenDropletType[]>([]);
   const [shootingStars, setShootingStars] = useState<ShootingStarType[]>([]);
   const [activeMobileView, setActiveMobileView] = useState<MobileView>('main');
   const [hasInteracted, setHasInteracted] = useState(false);
-  const [prestigePoints, setPrestigePoints] = useState<number>(initialPrestigePoints);
-  const [prestigeUpgrades, setPrestigeUpgrades] = useState<PrestigeUpgrade[]>(initialPrestigeUpgrades);
-  const [loginStreak, setLoginStreak] = useState<number>(initialLoginStreak);
-  const [lastLoginDate, setLastLoginDate] = useState<string | null>(initialLastLoginDate);
+  const [prestigePoints, setPrestigePoints] = useState<number>(initialState.prestigePoints);
+  const [prestigeUpgrades, setPrestigeUpgrades] = useState<PrestigeUpgrade[]>(initialState.prestigeUpgrades);
+  const [loginStreak, setLoginStreak] = useState<number>(initialState.loginStreak);
+  const [lastLoginDate, setLastLoginDate] = useState<string | null>(initialState.lastLoginDate);
   const [isDailyRewardModalOpen, setIsDailyRewardModalOpen] = useState(false);
   const [effectiveStreak, setEffectiveStreak] = useState(1);
   const [activeChallenge, setActiveChallenge] = useState<ActiveChallengeState | null>(null);
