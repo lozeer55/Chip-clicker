@@ -22,8 +22,6 @@ import AdminModal from './components/AdminModal';
 import PrestigeTracker from './components/PrestigeTracker';
 import PrestigeModal from './components/PrestigeModal';
 import type { Upgrade, FloatingNumberType, GameSettings, PlayerStats, Achievement, ActiveBoost, MilestoneToastInfo, AchievementToastInfo, GoldenDropletType, SaveState, MobileView, PrestigeUpgrade, Challenge, ActiveChallengeState, ChallengeToastInfo, EventToastInfo, ShootingStarType } from './types';
-// FIX: Imported `LightningIcon` to resolve "Cannot find name 'LightningIcon'" error.
-// FIX: Imported `UPGRADE_TIERS` to resolve "Cannot find name 'UPGRADE_TIERS'" error.
 import { INITIAL_UPGRADES, UPGRADE_TIERS, SettingsIcon, MILESTONES, ACHIEVEMENTS, AchievementIcon, ChartBarIcon, BASE_GOLDEN_DROPLET_CONFIG, PRESTIGE_UPGRADES, calculatePrestigePoints, DAILY_REWARDS, CHALLENGES, StopwatchIcon, BASE_RANDOM_EVENT_CONFIG, MagicIcon, LightningIcon, AdminIcon, PRESTIGE_REQUIREMENT, GalaxyIcon } from './constants';
 import { backgroundMusic, clickSound, milestoneSound, purchaseSound, achievementSound, goldenChipSpawnSound, goldenChipClickSound, prestigeSound } from './sounds';
 
@@ -36,91 +34,71 @@ type Notification =
   | ({ type: 'challenge' } & ChallengeToastInfo)
   | ({ type: 'event' } & EventToastInfo);
 
-// A single, robust function to get the initial state from storage or defaults.
-const getInitialState = () => {
-  try {
-    const savedData = localStorage.getItem(SAVE_KEY);
-    if (savedData) {
-      const parsed: Partial<SaveState> = JSON.parse(savedData);
-      
-      let upgradesWithLevels = INITIAL_UPGRADES.map(initialUpgrade => {
-        const savedUpgrade = parsed.upgrades?.find((u) => u.id === initialUpgrade.id);
-        return { 
-          ...initialUpgrade, 
-          level: savedUpgrade?.level || 0, 
-          isUnlocked: savedUpgrade?.isUnlocked ?? !initialUpgrade.isSecret 
-        };
-      });
-      
-      const savedPrestigeUpgradesMap = new Map(
-        (parsed.prestigeUpgrades || []).map((u) => [u.id, u.level])
-      );
-      const prestigeUpgradesWithLevels = PRESTIGE_UPGRADES.map(initialUpgrade => ({
-        ...initialUpgrade,
-        level: savedPrestigeUpgradesMap.get(initialUpgrade.id) || 0,
-      }));
-      
-      // Apply prestige bonuses to the initial upgrades
-      for (const pUpgrade of prestigeUpgradesWithLevels) {
-          if (pUpgrade.level > 0) {
-              const { bonus } = pUpgrade;
-              for (let i = 0; i < pUpgrade.level; i++) {
-                  if (bonus.type === 'increase_max_level') {
-                      upgradesWithLevels = upgradesWithLevels.map(u => 
-                          bonus.upgradeIds.includes(u.id)
-                              ? { ...u, maxLevel: u.maxLevel + bonus.amount }
-                              : u
-                      );
-                  } else if (bonus.type === 'increase_power_multiplier') {
-                       upgradesWithLevels = upgradesWithLevels.map(u => 
-                          bonus.upgradeIds.includes(u.id)
-                              ? { ...u, power: u.power * bonus.multiplier }
-                              : u
-                      );
-                  } else if (bonus.type === 'unlock_upgrade') {
-                      upgradesWithLevels = upgradesWithLevels.map(u =>
-                          u.id === bonus.upgradeId ? { ...u, isUnlocked: true } : u
-                      );
-                  }
-              }
-          }
-      }
+// Centralized function to apply all prestige bonuses to a given set of upgrades.
+// This is the single source of truth for how prestige affects the game state.
+const applyPrestigeBonuses = (baseUpgrades: Upgrade[], prestigeUpgrades: PrestigeUpgrade[]): Upgrade[] => {
+    let finalUpgrades = baseUpgrades.map(u => ({...u})); // Start with a fresh copy
 
-      const defaultStats: PlayerStats = { totalClicks: 0, totalCyclesEarned: 0, xp: 0, totalPrestigePointsEver: 0, totalPrestiges: 0, goldenDropletsClicked: 0 };
+    const firstInTierUpgradeIds = UPGRADE_TIERS.map(tier => tier.upgrades[0].id);
+    const secondInTierUpgradeIds = UPGRADE_TIERS.filter(t => t.upgrades.length > 1).map(tier => tier.upgrades[1].id);
+    const catalystSynergyLevel = prestigeUpgrades.find(pu => pu.id === 'catalyst_synergy')?.level || 0;
 
-      return { 
-        cycles: parsed.cycles || 0, 
-        upgrades: upgradesWithLevels, 
-        milestoneIndex: parsed.milestoneIndex || 0,
-        stats: { ...defaultStats, ...(parsed.stats || {}) },
-        unlockedAchievements: new Set(parsed.unlockedAchievements || []),
-        completedChallenges: new Set(parsed.completedChallenges || []),
-        prestigePoints: parsed.prestigePoints || 0,
-        prestigeUpgrades: prestigeUpgradesWithLevels,
-        loginStreak: parsed.loginStreak || 0,
-        lastLoginDate: parsed.lastLoginDate || null,
-      };
+    for (const pUpgrade of prestigeUpgrades) {
+        if (pUpgrade.level <= 0) continue;
+        
+        for (let i = 0; i < pUpgrade.level; i++) {
+            const bonus = pUpgrade.bonus;
+            switch(bonus.type) {
+                case 'increase_max_level':
+                    finalUpgrades = finalUpgrades.map(u =>
+                        bonus.upgradeIds.includes(u.id) ? { ...u, maxLevel: u.maxLevel + bonus.amount } : u
+                    );
+                    break;
+                case 'increase_power_multiplier':
+                    // Synergy nexus is handled in calculation hooks, not by modifying base power
+                    if (pUpgrade.id === 'synergy_nexus') continue;
+                     
+                    finalUpgrades = finalUpgrades.map(u =>
+                        bonus.upgradeIds.includes(u.id) ? { ...u, power: u.power * bonus.multiplier } : u
+                    );
+                    break;
+                case 'unlock_upgrade':
+                    finalUpgrades = finalUpgrades.map(u =>
+                        u.id === bonus.upgradeId ? { ...u, isUnlocked: true } : u
+                    );
+                    break;
+                case 'first_in_tier_bonus':
+                     finalUpgrades = finalUpgrades.map(u => {
+                        // Apply to first in tier
+                        if (firstInTierUpgradeIds.includes(u.id)) {
+                            return { ...u, power: u.power * bonus.multiplier };
+                        }
+                        // Apply to second in tier if catalyst is owned
+                        if (catalystSynergyLevel > 0 && secondInTierUpgradeIds.includes(u.id)) {
+                             return { ...u, power: u.power * bonus.multiplier };
+                        }
+                        return u;
+                    });
+                    break;
+            }
+        }
     }
-  } catch (error) {
-    console.error("Failed to load saved game, starting fresh:", error);
-    localStorage.removeItem(SAVE_KEY); // Clear corrupted save
-  }
-
-  // Return default state if no save file or if loading failed
-  return { 
-      cycles: 0, 
-      upgrades: INITIAL_UPGRADES.map(u => ({...u, level: 0, isUnlocked: !u.isSecret})), 
-      milestoneIndex: 0,
-      stats: { totalClicks: 0, totalCyclesEarned: 0, xp: 0, totalPrestigePointsEver: 0, totalPrestiges: 0, goldenDropletsClicked: 0 },
-      unlockedAchievements: new Set<string>(),
-      completedChallenges: new Set<string>(),
-      prestigePoints: 0,
-      prestigeUpgrades: PRESTIGE_UPGRADES.map(u => ({...u, level: 0})),
-      loginStreak: 0,
-      lastLoginDate: null,
-  };
+    return finalUpgrades;
 };
 
+// A simple function to load and parse the save file, or return null.
+const loadState = (): SaveState | null => {
+    try {
+        const savedData = localStorage.getItem(SAVE_KEY);
+        if (savedData) {
+            return JSON.parse(savedData);
+        }
+    } catch (error) {
+        console.error("Failed to load saved game:", error);
+        localStorage.removeItem(SAVE_KEY); // Clear corrupted save
+    }
+    return null;
+}
 
 // Load settings from localStorage
 const loadSettings = (): GameSettings => {
@@ -154,7 +132,57 @@ const loadSettings = (): GameSettings => {
 
 
 const App: React.FC = () => {
-  const [initialState] = useState(getInitialState);
+  const [initialState] = useState(() => {
+    const saved = loadState();
+
+    if (saved) {
+        // Rebuild full state from save data and constants
+        const prestigeUpgradesWithLevels = PRESTIGE_UPGRADES.map(pu => ({
+            ...pu,
+            level: saved.prestigeUpgrades?.find(spu => spu.id === pu.id)?.level || 0
+        }));
+
+        const baseUpgrades = INITIAL_UPGRADES.map(iu => ({
+            ...iu,
+            level: saved.upgrades?.find(su => su.id === iu.id)?.level || 0,
+            isUnlocked: saved.upgrades?.find(su => su.id === iu.id)?.isUnlocked ?? !iu.isSecret
+        }));
+        
+        const finalUpgrades = applyPrestigeBonuses(baseUpgrades, prestigeUpgradesWithLevels);
+        
+        const defaultStats: PlayerStats = { totalClicks: 0, totalCyclesEarned: 0, xp: 0, totalPrestigePointsEver: 0, totalPrestiges: 0, goldenDropletsClicked: 0 };
+
+        return {
+            cycles: saved.cycles || 0,
+            upgrades: finalUpgrades,
+            milestoneIndex: saved.milestoneIndex || 0,
+            stats: { ...defaultStats, ...(saved.stats || {}) },
+            unlockedAchievements: new Set(saved.unlockedAchievements || []),
+            completedChallenges: new Set(saved.completedChallenges || []),
+            prestigePoints: saved.prestigePoints || 0,
+            prestigeUpgrades: prestigeUpgradesWithLevels,
+            loginStreak: saved.loginStreak || 0,
+            lastLoginDate: saved.lastLoginDate || null,
+        };
+    }
+    
+    // If no save, return a pristine default state
+    const defaultPrestigeUpgrades = PRESTIGE_UPGRADES.map(u => ({...u, level: 0}));
+    const defaultUpgrades = INITIAL_UPGRADES.map(u => ({...u, level: 0, isUnlocked: !u.isSecret}));
+
+    return {
+        cycles: 0,
+        upgrades: defaultUpgrades,
+        milestoneIndex: 0,
+        stats: { totalClicks: 0, totalCyclesEarned: 0, xp: 0, totalPrestigePointsEver: 0, totalPrestiges: 0, goldenDropletsClicked: 0 },
+        unlockedAchievements: new Set<string>(),
+        completedChallenges: new Set<string>(),
+        prestigePoints: 0,
+        prestigeUpgrades: defaultPrestigeUpgrades,
+        loginStreak: 0,
+        lastLoginDate: null,
+    };
+  });
   
   const [cycles, setCycles] = useState<number>(initialState.cycles);
   const [upgrades, setUpgrades] = useState<Upgrade[]>(initialState.upgrades);
@@ -820,66 +848,10 @@ const App: React.FC = () => {
         );
         setPrestigeUpgrades(newPrestigeUpgrades);
 
-        // --- Start of Bonus Recalculation ---
-        // Start with base upgrades, but preserve current levels
-        let recalculatedUpgrades = INITIAL_UPGRADES.map(initialUpg => {
-            const currentUpg = upgrades.find(u => u.id === initialUpg.id);
-            return { ...initialUpg, level: currentUpg ? currentUpg.level : 0, isUnlocked: currentUpg ? currentUpg.isUnlocked : !initialUpg.isSecret };
-        });
-
-        // Apply ALL bonuses from the new prestige state
-        for (const pUpgrade of newPrestigeUpgrades) {
-            if (pUpgrade.level > 0) {
-                for (let i = 0; i < pUpgrade.level; i++) {
-                    const bonus = pUpgrade.bonus;
-                    switch(bonus.type) {
-                        case 'increase_max_level':
-                            recalculatedUpgrades = recalculatedUpgrades.map(u =>
-                                bonus.upgradeIds.includes(u.id) ? { ...u, maxLevel: u.maxLevel + bonus.amount } : u
-                            );
-                            break;
-                        case 'increase_power_multiplier':
-                             if (pUpgrade.id === 'synergy_nexus') continue; // Handled in calculation hooks
-                             let powerMultiplier = bonus.multiplier;
-
-                             // Special handling for catalyst synergy
-                             if (pUpgrade.id === 'catalyst_synergy') {
-                                const firstInTierMultiplier = newPrestigeUpgrades.find(pu => pu.id === 'first_in_tier_power')?.bonus.multiplier || 1;
-                                const firstInTierLevel = newPrestigeUpgrades.find(pu => pu.id === 'first_in_tier_power')?.level || 0;
-                                powerMultiplier = 1 + (firstInTierMultiplier -1) * firstInTierLevel; // Apply the full bonus
-                             }
-
-                            recalculatedUpgrades = recalculatedUpgrades.map(u =>
-                                bonus.upgradeIds.includes(u.id) ? { ...u, power: u.power * powerMultiplier } : u
-                            );
-                            break;
-                        case 'unlock_upgrade':
-                             recalculatedUpgrades = recalculatedUpgrades.map(u =>
-                                u.id === bonus.upgradeId ? { ...u, isUnlocked: true } : u
-                            );
-                            break;
-                        case 'first_in_tier_bonus': {
-                            const firstUpgradeIds = UPGRADE_TIERS.map(tier => tier.upgrades[0].id);
-                            recalculatedUpgrades = recalculatedUpgrades.map(u =>
-                                firstUpgradeIds.includes(u.id) ? { ...u, power: u.power * bonus.multiplier } : u
-                            );
-                            // Handle catalyst synergy here
-                            const catalyst = newPrestigeUpgrades.find(pu => pu.id === 'catalyst_synergy');
-                            if (catalyst && catalyst.level > 0) {
-                                const secondUpgradeIds = UPGRADE_TIERS.filter(t => t.upgrades.length > 1).map(tier => tier.upgrades[1].id);
-                                recalculatedUpgrades = recalculatedUpgrades.map(u =>
-                                    secondUpgradeIds.includes(u.id) ? { ...u, power: u.power * bonus.multiplier } : u
-                                );
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        
-        setUpgrades(recalculatedUpgrades);
-        // --- End of Bonus Recalculation ---
+        // --- Bonus Recalculation using the new centralized function ---
+        const baseUpgradesWithLevels = upgrades.map(u => ({...u})); // Create copy of current upgrades
+        const finalUpgrades = applyPrestigeBonuses(baseUpgradesWithLevels, newPrestigeUpgrades);
+        setUpgrades(finalUpgrades);
     }
   }, [prestigePoints, prestigeUpgrades, upgrades, playSound, prestigeBonuses.prestige_cost_reduction]);
 
@@ -935,34 +907,11 @@ const App: React.FC = () => {
         }
 
         setCycles(startingCycles);
-        // Reset upgrades but keep ascended properties (maxLevel, power, isUnlocked)
-        let resetUpgrades = INITIAL_UPGRADES.map(u => ({ ...u, level: 0, isUnlocked: !u.isSecret }));
-        for (const pUpgrade of prestigeUpgrades) {
-          if (pUpgrade.level > 0) {
-              const { bonus } = pUpgrade;
-              for (let i = 0; i < pUpgrade.level; i++) {
-                  if (bonus.type === 'increase_max_level') {
-                      resetUpgrades = resetUpgrades.map(u => 
-                          bonus.upgradeIds.includes(u.id)
-                              ? { ...u, maxLevel: u.maxLevel + bonus.amount }
-                              : u
-                      );
-                  } else if (bonus.type === 'increase_power_multiplier') {
-                       resetUpgrades = resetUpgrades.map(u => 
-                          bonus.upgradeIds.includes(u.id)
-                              ? { ...u, power: u.power * bonus.multiplier }
-                              : u
-                      );
-                  } else if (bonus.type === 'unlock_upgrade') {
-                      resetUpgrades = resetUpgrades.map(u =>
-                          u.id === bonus.upgradeId ? { ...u, isUnlocked: true } : u
-                      );
-                  }
-              }
-          }
-        }
-        setUpgrades(resetUpgrades);
-
+        
+        // Use centralized function to correctly reset upgrades while keeping prestige bonuses
+        const baseResetUpgrades = INITIAL_UPGRADES.map(u => ({ ...u, level: 0, isUnlocked: !u.isSecret }));
+        const finalResetUpgrades = applyPrestigeBonuses(baseResetUpgrades, prestigeUpgrades);
+        setUpgrades(finalResetUpgrades);
 
         setCurrentMilestoneIndex(0);
         setPlayerStats(prev => ({
@@ -1112,42 +1061,21 @@ const App: React.FC = () => {
       try {
         const { cycles, upgrades: savedUpgrades, milestoneIndex, stats, unlockedAchievements, completedChallenges, prestigePoints, prestigeUpgrades: savedPrestigeUpgrades, loginStreak, lastLoginDate } = loadedState;
         
-        let upgradesWithLevels = INITIAL_UPGRADES.map(initialUpgrade => {
-            const savedUpgrade = savedUpgrades.find(u => u.id === initialUpgrade.id);
-            return savedUpgrade ? { ...initialUpgrade, level: savedUpgrade.level, isUnlocked: savedUpgrade.isUnlocked ?? !initialUpgrade.isSecret } : { ...initialUpgrade, level: 0, isUnlocked: !initialUpgrade.isSecret };
-        });
-        
-        const savedPrestigeUpgradesMap = new Map(
-            (savedPrestigeUpgrades || []).map(u => [u.id, u.level])
-        );
-        const prestigeUpgradesWithLevels = PRESTIGE_UPGRADES.map(initialUpgrade => ({
-            ...initialUpgrade,
-            level: savedPrestigeUpgradesMap.get(initialUpgrade.id) || 0,
+        const prestigeUpgradesWithLevels = PRESTIGE_UPGRADES.map(pu => ({
+            ...pu,
+            level: savedPrestigeUpgrades?.find(spu => spu.id === pu.id)?.level || 0
         }));
 
-        for (const pUpgrade of prestigeUpgradesWithLevels) {
-            if (pUpgrade.level > 0) {
-                const { bonus } = pUpgrade;
-                for (let i = 0; i < pUpgrade.level; i++) {
-                    if (bonus.type === 'increase_max_level') {
-                        upgradesWithLevels = upgradesWithLevels.map(u => 
-                            bonus.upgradeIds.includes(u.id) ? { ...u, maxLevel: u.maxLevel + bonus.amount } : u
-                        );
-                    } else if (bonus.type === 'increase_power_multiplier') {
-                         upgradesWithLevels = upgradesWithLevels.map(u => 
-                            bonus.upgradeIds.includes(u.id) ? { ...u, power: u.power * bonus.multiplier } : u
-                        );
-                    } else if (bonus.type === 'unlock_upgrade') {
-                         upgradesWithLevels = upgradesWithLevels.map(u =>
-                            u.id === bonus.upgradeId ? { ...u, isUnlocked: true } : u
-                        );
-                    }
-                }
-            }
-        }
+        const baseUpgrades = INITIAL_UPGRADES.map(iu => ({
+            ...iu,
+            level: savedUpgrades?.find(su => su.id === iu.id)?.level || 0,
+            isUnlocked: savedUpgrades?.find(su => su.id === iu.id)?.isUnlocked ?? !iu.isSecret
+        }));
+        
+        const finalUpgrades = applyPrestigeBonuses(baseUpgrades, prestigeUpgradesWithLevels);
         
         setCycles(cycles);
-        setUpgrades(upgradesWithLevels);
+        setUpgrades(finalUpgrades);
         setCurrentMilestoneIndex(milestoneIndex);
         setPlayerStats(stats);
         setUnlockedAchievements(new Set(unlockedAchievements));
