@@ -197,9 +197,7 @@ const App: React.FC = () => {
 
   const particleCanvasRef = useRef<ParticleCanvasHandle>(null);
   const goldenDropletTimerRef = useRef<number | null>(null);
-  const cyclesRef = useRef(cycles);
   const musicRef = useRef<HTMLAudioElement | null>(null);
-  cyclesRef.current = cycles;
   
   const gameState = useMemo((): SaveState => ({
     cycles,
@@ -312,23 +310,16 @@ const App: React.FC = () => {
     return (baseCPC + synergyBonus) * totalBoostMultiplier('click_multiplier') * prestigeMultiplier;
   }, [upgrades, totalBoostMultiplier, prestigeMultiplier, prestigeUpgrades, baseCyclesPerSecond]);
 
-
-  useEffect(() => {
-    const previousCycles = cyclesRef.current;
-    if (cycles > previousCycles) {
-      const earned = cycles - previousCycles;
-      setPlayerStats(prev => ({
-        ...prev,
-        totalCyclesEarned: prev.totalCyclesEarned + earned
-      }));
-    }
-  }, [cycles]);
-
   useEffect(() => {
     if (cyclesPerSecond === 0) return;
     const ticksPerSecond = 20;
     const interval = setInterval(() => {
-      setCycles(prev => prev + cyclesPerSecond / ticksPerSecond);
+      const earned = cyclesPerSecond / ticksPerSecond;
+      setCycles(prev => prev + earned);
+      setPlayerStats(prev => ({
+        ...prev,
+        totalCyclesEarned: prev.totalCyclesEarned + earned
+      }));
     }, 1000 / ticksPerSecond);
     return () => clearInterval(interval);
   }, [cyclesPerSecond]);
@@ -678,7 +669,12 @@ const App: React.FC = () => {
     const amount = cyclesPerClick;
 
     setCycles(prev => prev + amount);
-    setPlayerStats(prev => ({...prev, totalClicks: prev.totalClicks + 1, xp: prev.xp + 1 }));
+    setPlayerStats(prev => ({
+        ...prev,
+        totalCyclesEarned: prev.totalCyclesEarned + amount,
+        totalClicks: prev.totalClicks + 1,
+        xp: prev.xp + 1,
+    }));
 
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -836,6 +832,7 @@ const App: React.FC = () => {
             // Base of 100 essence ensures reward even with 0 EPS
             const essenceToAdd = Math.max(100, (cyclesPerSecond || 1) * 60 * reward.value);
             setCycles(c => c + essenceToAdd);
+            setPlayerStats(p => ({ ...p, totalCyclesEarned: p.totalCyclesEarned + essenceToAdd }));
             break;
         case 'prestige_points':
             setPrestigePoints(p => p + reward.value);
@@ -925,6 +922,7 @@ const App: React.FC = () => {
         if (eventConfig && eventConfig.type === 'SHOOTING_STAR') {
             const reward = (cyclesPerSecond || 1) * 60 * eventConfig.rewardMinutesCps;
             setCycles(c => c + reward);
+            setPlayerStats(p => ({ ...p, totalCyclesEarned: p.totalCyclesEarned + reward }));
         }
     }, [playSound, cyclesPerSecond]);
 
