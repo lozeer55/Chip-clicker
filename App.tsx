@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import GameArea from './components/GameArea';
 import UpgradeStore from './components/UpgradeStore';
@@ -1060,7 +1058,7 @@ const App: React.FC = () => {
     if (window.confirm("Are you sure you want to reset all your progress? This cannot be undone.")) {
         try {
             localStorage.removeItem(SAVE_KEY);
-            // We don't remove settings, just game progress.
+            localStorage.removeItem(SETTINGS_KEY);
             window.location.reload();
         } catch (error) {
             console.error("Failed to clear saved data:", error);
