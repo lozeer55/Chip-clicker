@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { Upgrade, UpgradeTier, PrestigeUpgrade } from '../types';
-import { UPGRADE_TIERS, LockIcon, StarIcon, PRESTIGE_UPGRADES, formatNumber } from '../constants';
+import { UPGRADE_TIERS, LockIcon, StarIcon, formatNumber } from '../constants';
 
 interface UpgradeItemProps {
   upgrade: Upgrade;
@@ -460,7 +460,7 @@ const UpgradeStore: React.FC<UpgradeStoreProps> = ({ upgrades, onPurchase, cycle
       {activeTab === 'prestige' && (
         <ul className="space-y-3 flex-grow overflow-y-auto pr-2 -mr-2">
             <p className="text-sm text-slate-400 p-2 text-center bg-slate-800/50 rounded-md mb-2">Purchase permanent upgrades. Some upgrades require others to be purchased first.</p>
-            {PRESTIGE_UPGRADES.map(upgrade => (
+            {prestigeUpgrades.map(upgrade => (
                 <PrestigeUpgradeItem
                     key={upgrade.id}
                     upgrade={upgrade}
