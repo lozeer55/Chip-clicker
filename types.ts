@@ -19,6 +19,8 @@ export interface Upgrade {
       discount: number; // e.g., 0.9 for 90% off
       endTime: number;
   };
+  isSecret?: boolean;
+  isUnlocked?: boolean;
 }
 
 export interface UpgradeTier {
@@ -137,7 +139,28 @@ export type PrestigeBonus =
     | { type: 'starting_cycles'; value: number }
     | { type: 'cps_to_click_synergy'; value: number }
     | { type: 'increase_max_level'; upgradeIds: string[]; amount: number }
-    | { type: 'increase_power_multiplier'; upgradeIds: string[]; multiplier: number };
+    | { type: 'increase_power_multiplier'; upgradeIds: string[]; multiplier: number }
+    | { type: 'golden_droplet_chance'; multiplier: number }
+    | { type: 'golden_droplet_duration'; multiplier: number }
+    | { type: 'golden_droplet_effect'; multiplier: number }
+    | { type: 'random_event_chance'; multiplier: number }
+    | { type: 'random_event_effect'; multiplier: number }
+    | { type: 'achievement_bonus'; multiplier_per_achievement: number }
+    | { type: 'prestige_point_bonus'; multiplier: number }
+    | { type: 'unlock_upgrade'; upgradeId: string }
+    | { type: 'first_in_tier_bonus'; multiplier: number }
+    // New types for expanded prestige tree
+    | { type: 'prestige_burst_essence'; percent_of_pp: number }
+    | { type: 'prestige_boost'; boost_type: 'click' | 'eps'; multiplier: number; duration: number }
+    | { type: 'prestige_boost_duration_multiplier', multiplier: number }
+    | { type: 'xp_multiplier', multiplier: number }
+    | { type: 'meta_perm_boost_multiplier', multiplier: number }
+    | { type: 'prestige_cost_reduction', multiplier: number }
+    | { type: 'auto_to_click_synergy', value: number }
+    | { type: 'click_to_auto_synergy', value: number }
+    | { type: 'golden_droplet_secondary_boost', boost_type: 'eps', multiplier: number, duration: number }
+    | { type: 'ascension_pp_synergy', multiplier: number };
+
 
 export interface PrestigeUpgrade {
   id: string;
@@ -148,14 +171,14 @@ export interface PrestigeUpgrade {
   maxLevel?: number;
   bonus: PrestigeBonus;
   icon: React.ReactElement<{ className?: string }>;
-  requires?: string;
+  requires?: string | string[]; // Can now require multiple upgrades
   x: number; // Position for the tree view (percentage)
   y: number; // Position for the tree view (percentage)
 }
 
 export type SaveState = {
     cycles: number;
-    upgrades: { id: string, level: number }[];
+    upgrades: { id: string, level: number, isUnlocked?: boolean }[];
     milestoneIndex: number;
     stats: PlayerStats;
     unlockedAchievements: string[];

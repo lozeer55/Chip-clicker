@@ -326,7 +326,7 @@ const UpgradeStore: React.FC<UpgradeStoreProps> = ({ upgrades, onPurchase, cycle
                             ? upgrades.find(u => u.id === upgradeStub.id) 
                             : upgradeStub;
                         
-                        if (!upgrade) return null;
+                        if (!upgrade || !upgrade.isUnlocked) return null;
 
                         return (
                             <UpgradeItem

@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import GameArea from './components/GameArea';
 import UpgradeStore from './components/UpgradeStore';
@@ -23,7 +25,8 @@ import PrestigeTracker from './components/PrestigeTracker';
 import PrestigeModal from './components/PrestigeModal';
 import type { Upgrade, FloatingNumberType, GameSettings, PlayerStats, Achievement, ActiveBoost, MilestoneToastInfo, AchievementToastInfo, GoldenDropletType, SaveState, MobileView, PrestigeUpgrade, Challenge, ActiveChallengeState, ChallengeToastInfo, EventToastInfo, ShootingStarType } from './types';
 // FIX: Imported `LightningIcon` to resolve "Cannot find name 'LightningIcon'" error.
-import { INITIAL_UPGRADES, SettingsIcon, MILESTONES, ACHIEVEMENTS, AchievementIcon, ChartBarIcon, GOLDEN_DROPLET_LIFESPAN, GOLDEN_DROPLET_SPAWN_INTERVAL_MIN, GOLDEN_DROPLET_SPAWN_INTERVAL_MAX, GOLDEN_DROPLET_BOOST_MULTIPLIER, GOLDEN_DROPLET_BOOST_DURATION, PRESTIGE_UPGRADES, calculatePrestigePoints, DAILY_REWARDS, CHALLENGES, StopwatchIcon, RANDOM_EVENT_CONFIG, MagicIcon, LightningIcon, AdminIcon, PRESTIGE_REQUIREMENT, GalaxyIcon } from './constants';
+// FIX: Imported `UPGRADE_TIERS` to resolve "Cannot find name 'UPGRADE_TIERS'" error.
+import { INITIAL_UPGRADES, UPGRADE_TIERS, SettingsIcon, MILESTONES, ACHIEVEMENTS, AchievementIcon, ChartBarIcon, BASE_GOLDEN_DROPLET_CONFIG, PRESTIGE_UPGRADES, calculatePrestigePoints, DAILY_REWARDS, CHALLENGES, StopwatchIcon, BASE_RANDOM_EVENT_CONFIG, MagicIcon, LightningIcon, AdminIcon, PRESTIGE_REQUIREMENT, GalaxyIcon } from './constants';
 import { backgroundMusic, clickSound, milestoneSound, purchaseSound, achievementSound, goldenChipSpawnSound, goldenChipClickSound, prestigeSound } from './sounds';
 
 const SAVE_KEY = 'elixirClickerSave';
@@ -57,7 +60,7 @@ const loadGame = (): {
       let upgradesWithLevels = INITIAL_UPGRADES.map(initialUpgrade => {
         // FIX: Added optional chaining as savedUpgrades can be undefined with a partial save state.
         const savedUpgrade = savedUpgrades?.find((u) => u.id === initialUpgrade.id);
-        return savedUpgrade ? { ...initialUpgrade, level: savedUpgrade.level } : { ...initialUpgrade, level: 0 };
+        return savedUpgrade ? { ...initialUpgrade, level: savedUpgrade.level, isUnlocked: savedUpgrade.isUnlocked ?? !initialUpgrade.isSecret } : { ...initialUpgrade, level: 0, isUnlocked: !initialUpgrade.isSecret };
       });
       
       const savedPrestigeUpgradesMap = new Map(
@@ -86,6 +89,10 @@ const loadGame = (): {
                           bonus.upgradeIds.includes(u.id)
                               ? { ...u, power: u.power * bonus.multiplier }
                               : u
+                      );
+                  } else if (bonus.type === 'unlock_upgrade') {
+                      upgradesWithLevels = upgradesWithLevels.map(u =>
+                          u.id === bonus.upgradeId ? { ...u, isUnlocked: true } : u
                       );
                   }
               }
@@ -122,7 +129,7 @@ const loadGame = (): {
   }
   return { 
       initialCycles: 0, 
-      initialUpgrades: INITIAL_UPGRADES.map(u => ({...u, level: 0})), 
+      initialUpgrades: INITIAL_UPGRADES.map(u => ({...u, level: 0, isUnlocked: !u.isSecret})), 
       initialMilestoneIndex: 0,
       initialStats: { totalClicks: 0, totalCyclesEarned: 0, xp: 0, totalPrestigePointsEver: 0, totalPrestiges: 0, goldenDropletsClicked: 0 },
       initialUnlockedAchievements: new Set(),
@@ -203,7 +210,7 @@ const App: React.FC = () => {
   
   const gameState = useMemo((): SaveState => ({
     cycles,
-    upgrades: upgrades.map(({ id, level }) => ({ id, level })),
+    upgrades: upgrades.map(({ id, level, isUnlocked }) => ({ id, level, isUnlocked })),
     milestoneIndex: currentMilestoneIndex,
     stats: playerStats,
     unlockedAchievements: Array.from(unlockedAchievements),
@@ -277,40 +284,99 @@ const App: React.FC = () => {
           .filter(b => b.type === type && now < b.endTime)
           .reduce((acc, b) => acc * b.multiplier, 1);
   }, [activeBoosts]);
+  
+  const prestigeBonuses = useMemo(() => {
+    const bonuses = {
+        all_cycles_multiplier: 1,
+        achievement_bonus: 0,
+        prestige_point_bonus: 1,
+        golden_droplet_chance: 1,
+        golden_droplet_duration: 1,
+        golden_droplet_effect: 1,
+        random_event_chance: 1,
+        random_event_effect: 1,
+        xp_multiplier: 1,
+        prestige_cost_reduction: 1,
+        cps_to_click_synergy: 0,
+        auto_to_click_synergy: 0,
+        click_to_auto_synergy: 0,
+        ascension_pp_synergy: 0,
+    };
 
-  const prestigeMultiplier = useMemo(() => {
-    return 1 + prestigeUpgrades.reduce((total, u) => {
-        if (u.bonus.type === 'all_cycles_multiplier') {
-            return total + u.bonus.value * u.level;
+    let meta_perm_boost_multiplier = 1;
+    let synergy_nexus_multiplier = 1;
+
+    // First pass to gather all base bonuses
+    for (const pUpgrade of prestigeUpgrades) {
+        if (pUpgrade.level <= 0) continue;
+
+        for (let i = 0; i < pUpgrade.level; i++) {
+            const b = pUpgrade.bonus;
+            switch (b.type) {
+                case 'all_cycles_multiplier': bonuses.all_cycles_multiplier += b.value; break;
+                case 'achievement_bonus': bonuses.achievement_bonus += b.multiplier_per_achievement; break;
+                case 'prestige_point_bonus': bonuses.prestige_point_bonus *= b.multiplier; break;
+                case 'golden_droplet_chance': bonuses.golden_droplet_chance *= b.multiplier; break;
+                case 'golden_droplet_duration': bonuses.golden_droplet_duration *= b.multiplier; break;
+                case 'golden_droplet_effect': bonuses.golden_droplet_effect *= b.multiplier; break;
+                case 'random_event_chance': bonuses.random_event_chance *= b.multiplier; break;
+                case 'random_event_effect': bonuses.random_event_effect *= b.multiplier; break;
+                case 'xp_multiplier': bonuses.xp_multiplier *= b.multiplier; break;
+                case 'prestige_cost_reduction': bonuses.prestige_cost_reduction *= b.multiplier; break;
+                case 'cps_to_click_synergy': bonuses.cps_to_click_synergy += b.value; break;
+                case 'auto_to_click_synergy': bonuses.auto_to_click_synergy += b.value; break;
+                case 'click_to_auto_synergy': bonuses.click_to_auto_synergy += b.value; break;
+                case 'meta_perm_boost_multiplier': meta_perm_boost_multiplier *= b.multiplier; break;
+                case 'ascension_pp_synergy': {
+                  const ascensionUpgradesOwned = prestigeUpgrades.filter(pu => pu.id.startsWith('ascension_') && pu.level > 0).length;
+                  bonuses.ascension_pp_synergy = ascensionUpgradesOwned * b.multiplier;
+                  break;
+                }
+            }
         }
-        return total;
-    }, 0);
+        if (pUpgrade.id === 'synergy_nexus' && pUpgrade.level > 0) {
+            synergy_nexus_multiplier = pUpgrade.bonus.type === 'increase_power_multiplier' ? pUpgrade.bonus.multiplier : 1;
+        }
+    }
+    
+    // Apply meta bonuses
+    bonuses.all_cycles_multiplier = 1 + ((bonuses.all_cycles_multiplier - 1) * meta_perm_boost_multiplier);
+    bonuses.cps_to_click_synergy *= synergy_nexus_multiplier;
+    bonuses.auto_to_click_synergy *= synergy_nexus_multiplier;
+    bonuses.click_to_auto_synergy *= synergy_nexus_multiplier;
+    
+    // Finalize PP bonus
+    bonuses.prestige_point_bonus += bonuses.ascension_pp_synergy;
+
+    return bonuses;
   }, [prestigeUpgrades]);
+
+  const achievementMultiplier = useMemo(() => {
+    return 1 + (unlockedAchievements.size * prestigeBonuses.achievement_bonus);
+  }, [unlockedAchievements.size, prestigeBonuses.achievement_bonus]);
 
   const baseCyclesPerSecond = useMemo(() => {
     return upgrades
       .filter(u => u.type === 'auto')
       .reduce((total, u) => total + u.power * u.level, 0);
   }, [upgrades]);
+  
+  const baseCyclesPerClick = useMemo(() => {
+      return upgrades
+        .filter(u => u.type === 'click' && u.level > 0)
+        .reduce((total, u) => total + u.power * u.level, 1);
+  }, [upgrades]);
 
   const cyclesPerSecond = useMemo(() => {
-    return baseCyclesPerSecond * totalBoostMultiplier('bps_multiplier') * prestigeMultiplier;
-  }, [baseCyclesPerSecond, totalBoostMultiplier, prestigeMultiplier]);
+    const synergyBonus = (baseCyclesPerClick - 1) * prestigeBonuses.click_to_auto_synergy;
+    return (baseCyclesPerSecond + synergyBonus) * totalBoostMultiplier('bps_multiplier') * prestigeBonuses.all_cycles_multiplier * achievementMultiplier;
+  }, [baseCyclesPerSecond, baseCyclesPerClick, totalBoostMultiplier, prestigeBonuses, achievementMultiplier]);
 
   const cyclesPerClick = useMemo(() => {
-    const baseCPC = upgrades
-      .filter(u => u.type === 'click' && u.level > 0)
-      .reduce((total, u) => total + u.power * u.level, 1);
-      
-    const synergyBonus = prestigeUpgrades.reduce((total, u) => {
-        if (u.bonus.type === 'cps_to_click_synergy') {
-            return total + (u.bonus.value * u.level * baseCyclesPerSecond);
-        }
-        return total;
-    }, 0);
-
-    return (baseCPC + synergyBonus) * totalBoostMultiplier('click_multiplier') * prestigeMultiplier;
-  }, [upgrades, totalBoostMultiplier, prestigeMultiplier, prestigeUpgrades, baseCyclesPerSecond]);
+    const synergyBonusCps = baseCyclesPerSecond * prestigeBonuses.cps_to_click_synergy;
+    const synergyBonusAuto = baseCyclesPerSecond * prestigeBonuses.auto_to_click_synergy;
+    return (baseCyclesPerClick + synergyBonusCps + synergyBonusAuto) * totalBoostMultiplier('click_multiplier') * prestigeBonuses.all_cycles_multiplier * achievementMultiplier;
+  }, [baseCyclesPerClick, baseCyclesPerSecond, totalBoostMultiplier, prestigeBonuses, achievementMultiplier]);
 
   useEffect(() => {
     if (cyclesPerSecond === 0) return;
@@ -446,6 +512,14 @@ const App: React.FC = () => {
         playSound(achievementSound);
     }
   }, [playerStats, upgrades, unlockedAchievements, playSound]);
+  
+  const effectiveGoldenDropletConfig = useMemo(() => ({
+    LIFESPAN: BASE_GOLDEN_DROPLET_CONFIG.LIFESPAN * prestigeBonuses.golden_droplet_duration,
+    SPAWN_INTERVAL_MIN: BASE_GOLDEN_DROPLET_CONFIG.SPAWN_INTERVAL_MIN / prestigeBonuses.golden_droplet_chance,
+    SPAWN_INTERVAL_MAX: BASE_GOLDEN_DROPLET_CONFIG.SPAWN_INTERVAL_MAX / prestigeBonuses.golden_droplet_chance,
+    BOOST_MULTIPLIER: BASE_GOLDEN_DROPLET_CONFIG.BOOST_MULTIPLIER * prestigeBonuses.golden_droplet_effect,
+    BOOST_DURATION: BASE_GOLDEN_DROPLET_CONFIG.BOOST_DURATION * prestigeBonuses.golden_droplet_effect,
+  }), [prestigeBonuses]);
 
   // Golden Droplet Spawner
     useEffect(() => {
@@ -453,7 +527,7 @@ const App: React.FC = () => {
             if (goldenDropletTimerRef.current) {
                 clearTimeout(goldenDropletTimerRef.current);
             }
-            const delay = Math.random() * (GOLDEN_DROPLET_SPAWN_INTERVAL_MAX - GOLDEN_DROPLET_SPAWN_INTERVAL_MIN) + GOLDEN_DROPLET_SPAWN_INTERVAL_MIN;
+            const delay = Math.random() * (effectiveGoldenDropletConfig.SPAWN_INTERVAL_MAX - effectiveGoldenDropletConfig.SPAWN_INTERVAL_MIN) + effectiveGoldenDropletConfig.SPAWN_INTERVAL_MIN;
             
             goldenDropletTimerRef.current = setTimeout(() => {
                 setGoldenDroplets(prev => {
@@ -479,7 +553,7 @@ const App: React.FC = () => {
                 clearTimeout(goldenDropletTimerRef.current);
             }
         };
-    }, [playSound]);
+    }, [playSound, effectiveGoldenDropletConfig]);
 
     // Golden Droplet Timeout
     useEffect(() => {
@@ -489,11 +563,11 @@ const App: React.FC = () => {
                 setGoldenDroplets(prev => prev.map(gc => 
                     gc.id === visibleDroplet.id ? { ...gc, status: 'missed' } : gc
                 ));
-            }, GOLDEN_DROPLET_LIFESPAN);
+            }, effectiveGoldenDropletConfig.LIFESPAN);
 
             return () => clearTimeout(timeoutId);
         }
-    }, [goldenDroplets]);
+    }, [goldenDroplets, effectiveGoldenDropletConfig.LIFESPAN]);
     
     // --- Challenge Logic ---
     
@@ -566,33 +640,47 @@ const App: React.FC = () => {
         }
     }, [cycles, upgrades, activeChallenge, handleChallengeEnd]);
 
+    const effectiveRandomEventConfig = useMemo(() => {
+        const effectMult = prestigeBonuses.random_event_effect;
+        return {
+            ...BASE_RANDOM_EVENT_CONFIG,
+            EVENT_CHANCE: BASE_RANDOM_EVENT_CONFIG.EVENT_CHANCE * prestigeBonuses.random_event_chance,
+            EVENTS: BASE_RANDOM_EVENT_CONFIG.EVENTS.map(event => ({
+                ...event,
+                duration: event.duration * effectMult,
+                multiplier: event.multiplier ? event.multiplier * effectMult : undefined,
+                discount: event.discount ? 1 - ((1 - event.discount) / effectMult) : undefined, // discount gets stronger
+                rewardMinutesCps: event.rewardMinutesCps ? event.rewardMinutesCps * effectMult : undefined,
+            }))
+        };
+    }, [prestigeBonuses]);
 
     // Random Event Spawner
     useEffect(() => {
         const eventTimer = setInterval(() => {
-            if (Math.random() > RANDOM_EVENT_CONFIG.EVENT_CHANCE) return;
+            if (Math.random() > effectiveRandomEventConfig.EVENT_CHANCE) return;
             
-            const totalWeight = RANDOM_EVENT_CONFIG.EVENTS.reduce((sum, event) => sum + event.weight, 0);
+            const totalWeight = effectiveRandomEventConfig.EVENTS.reduce((sum, event) => sum + event.weight, 0);
             let random = Math.random() * totalWeight;
             
-            for (const event of RANDOM_EVENT_CONFIG.EVENTS) {
+            for (const event of effectiveRandomEventConfig.EVENTS) {
                 if (random < event.weight) {
                     // Trigger this event
                     switch (event.type) {
                         case 'ESSENCE_FRENZY':
                             playSound(milestoneSound);
                             const now = Date.now();
-                            const endTime = now + event.duration * 1000;
+                            const endTime = now + (event.duration || 15) * 1000;
                             setActiveBoosts(prev => [
                                 ...prev,
-                                { id: now, type: 'click_multiplier', multiplier: event.multiplier, endTime, source: 'Essence Frenzy' },
-                                { id: now + 1, type: 'bps_multiplier', multiplier: event.multiplier, endTime, source: 'Essence Frenzy' }
+                                { id: now, type: 'click_multiplier', multiplier: event.multiplier || 5, endTime, source: 'Essence Frenzy' },
+                                { id: now + 1, type: 'bps_multiplier', multiplier: event.multiplier || 5, endTime, source: 'Essence Frenzy' }
                             ]);
                             setNotificationQueue(prev => [...prev, {
                                 type: 'event',
                                 id: now,
                                 title: '¡Frenesí de Esencia!',
-                                description: `¡Toda la ganancia de esencia x${event.multiplier} por ${event.duration} segundos!`,
+                                description: `¡Toda la ganancia de esencia x${event.multiplier || 5} por ${Math.round(event.duration || 15)} segundos!`,
                                 icon: <LightningIcon />
                             }]);
                             break;
@@ -604,14 +692,14 @@ const App: React.FC = () => {
                                 const randomUpgrade = eligibleUpgrades[Math.floor(Math.random() * eligibleUpgrades.length)];
                                 setUpgrades(current => current.map(u => 
                                     u.id === randomUpgrade.id 
-                                        ? { ...u, surged: { discount: event.discount, endTime: Date.now() + event.duration * 1000 } }
+                                        ? { ...u, surged: { discount: event.discount || 0.9, endTime: Date.now() + (event.duration || 20) * 1000 } }
                                         : u
                                 ));
                                 setNotificationQueue(prev => [...prev, {
                                     type: 'event',
                                     id: Date.now(),
                                     title: '¡Oleada de Mejoras!',
-                                    description: `${randomUpgrade.name} tiene un ${event.discount * 100}% de descuento por ${event.duration}s!`,
+                                    description: `${randomUpgrade.name} tiene un ${Math.round((event.discount || 0.9) * 100)}% de descuento por ${Math.round(event.duration || 20)}s!`,
                                     icon: <MagicIcon className="h-6 w-6" />
                                 }]);
                             }
@@ -626,7 +714,7 @@ const App: React.FC = () => {
                             const endX = window.innerWidth - (isFromLeft ? -100 : window.innerWidth + 100);
                             const endY = window.innerHeight + 100;
                             setShootingStars(prev => [...prev, {
-                                id, startX, startY, endX, endY, duration: event.duration, status: 'visible'
+                                id, startX, startY, endX, endY, duration: event.duration || 5, status: 'visible'
                             }]);
                             break;
                     }
@@ -635,10 +723,10 @@ const App: React.FC = () => {
                 random -= event.weight;
             }
 
-        }, RANDOM_EVENT_CONFIG.TICK_INTERVAL);
+        }, effectiveRandomEventConfig.TICK_INTERVAL);
 
         return () => clearInterval(eventTimer);
-    }, [upgrades, playSound]);
+    }, [upgrades, playSound, effectiveRandomEventConfig]);
 
     // Upgrade Surge cleaner
     useEffect(() => {
@@ -675,7 +763,7 @@ const App: React.FC = () => {
         ...prev,
         totalCyclesEarned: prev.totalCyclesEarned + amount,
         totalClicks: prev.totalClicks + 1,
-        xp: prev.xp + 1,
+        xp: prev.xp + (1 * prestigeBonuses.xp_multiplier),
     }));
 
     const rect = e.currentTarget.getBoundingClientRect();
@@ -697,7 +785,7 @@ const App: React.FC = () => {
       particleCanvasRef.current?.createBurst(e.clientX, e.clientY, !!isBoosted, amount);
     }
 
-  }, [cyclesPerClick, playSound, totalBoostMultiplier, settings.showFloatingNumbers, settings.showParticles, hasInteracted]);
+  }, [cyclesPerClick, playSound, totalBoostMultiplier, settings.showFloatingNumbers, settings.showParticles, hasInteracted, prestigeBonuses.xp_multiplier]);
 
   const handlePurchaseUpgrade = useCallback((upgradeId: string, levelsToBuy: number) => {
     const upgrade = upgrades.find(u => u.id === upgradeId);
@@ -722,23 +810,26 @@ const App: React.FC = () => {
           u.id === upgradeId ? { ...u, level: u.level + levelsToBuy } : u
         )
       );
-      setPlayerStats(prev => ({...prev, xp: prev.xp + levelsToBuy * 5 }));
+      setPlayerStats(prev => ({...prev, xp: prev.xp + (levelsToBuy * 5 * prestigeBonuses.xp_multiplier) }));
     }
-  }, [cycles, upgrades, playSound]);
+  }, [cycles, upgrades, playSound, prestigeBonuses.xp_multiplier]);
   
   const handlePurchasePrestigeUpgrade = useCallback((upgradeId: string) => {
     const upgrade = prestigeUpgrades.find(u => u.id === upgradeId);
     if (!upgrade) return;
 
     // Check dependency
-    if (upgrade.requires) {
-        const requiredUpgrade = prestigeUpgrades.find(p => p.id === upgrade.requires);
-        if (!requiredUpgrade || requiredUpgrade.level === 0) {
-            return; // Requirement not met
-        }
+    const requires = Array.isArray(upgrade.requires) ? upgrade.requires : (upgrade.requires ? [upgrade.requires] : []);
+    const requirementsMet = requires.every(reqId => {
+        const requiredUpgrade = prestigeUpgrades.find(p => p.id === reqId);
+        return requiredUpgrade && requiredUpgrade.level > 0;
+    });
+
+    if (!requirementsMet) {
+        return; // Requirement not met
     }
 
-    const cost = upgrade.cost(upgrade.level);
+    const cost = upgrade.cost(upgrade.level) * prestigeBonuses.prestige_cost_reduction;
     if (prestigePoints >= cost && (!upgrade.maxLevel || upgrade.level < upgrade.maxLevel)) {
         playSound(purchaseSound);
         setPrestigePoints(prev => prev - cost);
@@ -752,22 +843,55 @@ const App: React.FC = () => {
         // Start with base upgrades, but preserve current levels
         let recalculatedUpgrades = INITIAL_UPGRADES.map(initialUpg => {
             const currentUpg = upgrades.find(u => u.id === initialUpg.id);
-            return { ...initialUpg, level: currentUpg ? currentUpg.level : 0 };
+            return { ...initialUpg, level: currentUpg ? currentUpg.level : 0, isUnlocked: currentUpg ? currentUpg.isUnlocked : !initialUpg.isSecret };
         });
 
         // Apply ALL bonuses from the new prestige state
         for (const pUpgrade of newPrestigeUpgrades) {
             if (pUpgrade.level > 0) {
-                const { bonus } = pUpgrade;
                 for (let i = 0; i < pUpgrade.level; i++) {
-                    if (bonus.type === 'increase_max_level') {
-                        recalculatedUpgrades = recalculatedUpgrades.map(u =>
-                            bonus.upgradeIds.includes(u.id) ? { ...u, maxLevel: u.maxLevel + bonus.amount } : u
-                        );
-                    } else if (bonus.type === 'increase_power_multiplier') {
-                        recalculatedUpgrades = recalculatedUpgrades.map(u =>
-                            bonus.upgradeIds.includes(u.id) ? { ...u, power: u.power * bonus.multiplier } : u
-                        );
+                    const bonus = pUpgrade.bonus;
+                    switch(bonus.type) {
+                        case 'increase_max_level':
+                            recalculatedUpgrades = recalculatedUpgrades.map(u =>
+                                bonus.upgradeIds.includes(u.id) ? { ...u, maxLevel: u.maxLevel + bonus.amount } : u
+                            );
+                            break;
+                        case 'increase_power_multiplier':
+                             if (pUpgrade.id === 'synergy_nexus') continue; // Handled in calculation hooks
+                             let powerMultiplier = bonus.multiplier;
+
+                             // Special handling for catalyst synergy
+                             if (pUpgrade.id === 'catalyst_synergy') {
+                                const firstInTierMultiplier = newPrestigeUpgrades.find(pu => pu.id === 'first_in_tier_power')?.bonus.multiplier || 1;
+                                const firstInTierLevel = newPrestigeUpgrades.find(pu => pu.id === 'first_in_tier_power')?.level || 0;
+                                powerMultiplier = 1 + (firstInTierMultiplier -1) * firstInTierLevel; // Apply the full bonus
+                             }
+
+                            recalculatedUpgrades = recalculatedUpgrades.map(u =>
+                                bonus.upgradeIds.includes(u.id) ? { ...u, power: u.power * powerMultiplier } : u
+                            );
+                            break;
+                        case 'unlock_upgrade':
+                             recalculatedUpgrades = recalculatedUpgrades.map(u =>
+                                u.id === bonus.upgradeId ? { ...u, isUnlocked: true } : u
+                            );
+                            break;
+                        case 'first_in_tier_bonus': {
+                            const firstUpgradeIds = UPGRADE_TIERS.map(tier => tier.upgrades[0].id);
+                            recalculatedUpgrades = recalculatedUpgrades.map(u =>
+                                firstUpgradeIds.includes(u.id) ? { ...u, power: u.power * bonus.multiplier } : u
+                            );
+                            // Handle catalyst synergy here
+                            const catalyst = newPrestigeUpgrades.find(pu => pu.id === 'catalyst_synergy');
+                            if (catalyst && catalyst.level > 0) {
+                                const secondUpgradeIds = UPGRADE_TIERS.filter(t => t.upgrades.length > 1).map(tier => tier.upgrades[1].id);
+                                recalculatedUpgrades = recalculatedUpgrades.map(u =>
+                                    secondUpgradeIds.includes(u.id) ? { ...u, power: u.power * bonus.multiplier } : u
+                                );
+                            }
+                            break;
+                        }
                     }
                 }
             }
@@ -776,26 +900,62 @@ const App: React.FC = () => {
         setUpgrades(recalculatedUpgrades);
         // --- End of Bonus Recalculation ---
     }
-  }, [prestigePoints, prestigeUpgrades, upgrades, playSound]);
+  }, [prestigePoints, prestigeUpgrades, upgrades, playSound, prestigeBonuses.prestige_cost_reduction]);
 
   const handlePrestige = useCallback(() => {
-    const pointsGained = calculatePrestigePoints(playerStats.totalCyclesEarned);
+    const pointsGained = calculatePrestigePoints(playerStats.totalCyclesEarned, prestigeBonuses.prestige_point_bonus);
     if (pointsGained <= 0) {
         alert("You have not earned enough essence to gain Prestige Points.");
         return;
     }
 
     if (window.confirm(`Are you sure you want to prestige? This will reset your essence, upgrades, and milestones, but you will gain ${pointsGained} Prestige Points.`)) {
-        const startingCycles = prestigeUpgrades.reduce((total, u) => {
-            if (u.bonus.type === 'starting_cycles') {
-                return total + u.bonus.value * u.level;
+        
+        let newBoosts: ActiveBoost[] = [];
+        let startingCycles = 0;
+
+        // Handle special "on prestige" triggers
+        for (const pUpgrade of prestigeUpgrades) {
+            if (pUpgrade.level <= 0) continue;
+            const bonus = pUpgrade.bonus;
+            for (let i = 0; i < pUpgrade.level; i++) {
+                if (bonus.type === 'prestige_burst_essence') {
+                    startingCycles += (prestigePoints * bonus.percent_of_pp);
+                } else if (bonus.type === 'starting_cycles') {
+                    startingCycles += bonus.value * (i + 1);
+                } else if (bonus.type === 'prestige_boost') {
+                     let duration = bonus.duration;
+                     const durationMultiplier = prestigeUpgrades.reduce((mult, pu) => {
+                        if (pu.level > 0 && pu.bonus.type === 'prestige_boost_duration_multiplier') {
+                            return mult * Math.pow(pu.bonus.multiplier, pu.level);
+                        }
+                        return mult;
+                     }, 1);
+
+                    newBoosts.push({
+                        id: Date.now() + Math.random(),
+                        type: bonus.boost_type === 'click' ? 'click_multiplier' : 'bps_multiplier',
+                        multiplier: bonus.multiplier,
+                        endTime: Date.now() + duration * durationMultiplier * 1000,
+                        source: 'Prestige Boost'
+                    });
+                } else if (bonus.type === 'unlock_upgrade' && bonus.upgradeId === 'star_caller_ability') {
+                     const id = Date.now();
+                     const isFromLeft = Math.random() > 0.5;
+                     const startX = isFromLeft ? -100 : window.innerWidth + 100;
+                     const startY = -100;
+                     const endX = window.innerWidth - (isFromLeft ? -100 : window.innerWidth + 100);
+                     const endY = window.innerHeight + 100;
+                     setShootingStars(prev => [...prev, {
+                         id, startX, startY, endX, endY, duration: 5, status: 'visible'
+                     }]);
+                }
             }
-            return total;
-        }, 0);
+        }
 
         setCycles(startingCycles);
-        // Reset upgrades but keep ascended properties (maxLevel, power)
-        let resetUpgrades = INITIAL_UPGRADES.map(u => ({ ...u, level: 0 }));
+        // Reset upgrades but keep ascended properties (maxLevel, power, isUnlocked)
+        let resetUpgrades = INITIAL_UPGRADES.map(u => ({ ...u, level: 0, isUnlocked: !u.isSecret }));
         for (const pUpgrade of prestigeUpgrades) {
           if (pUpgrade.level > 0) {
               const { bonus } = pUpgrade;
@@ -811,6 +971,10 @@ const App: React.FC = () => {
                           bonus.upgradeIds.includes(u.id)
                               ? { ...u, power: u.power * bonus.multiplier }
                               : u
+                      );
+                  } else if (bonus.type === 'unlock_upgrade') {
+                      resetUpgrades = resetUpgrades.map(u =>
+                          u.id === bonus.upgradeId ? { ...u, isUnlocked: true } : u
                       );
                   }
               }
@@ -829,12 +993,12 @@ const App: React.FC = () => {
             totalPrestiges: (prev.totalPrestiges || 0) + 1,
         }));
         setPrestigePoints(prev => prev + pointsGained);
-        setActiveBoosts([]);
+        setActiveBoosts(newBoosts);
         setFloatingNumbers([]);
         
         playSound(prestigeSound);
     }
-  }, [playerStats.totalCyclesEarned, prestigeUpgrades, playSound]);
+  }, [playerStats.totalCyclesEarned, prestigeUpgrades, prestigePoints, playSound, prestigeBonuses.prestige_point_bonus]);
 
   const handleClaimDailyReward = useCallback(() => {
     const rewardIndex = (effectiveStreak - 1) % DAILY_REWARDS.length;
@@ -914,15 +1078,29 @@ const App: React.FC = () => {
       
       setPlayerStats(prev => ({ ...prev, goldenDropletsClicked: (prev.goldenDropletsClicked || 0) + 1 }));
 
-      const newBoost: ActiveBoost = {
+      let newBoosts: ActiveBoost[] = [{
           id: Date.now(),
           type: 'click_multiplier',
-          multiplier: GOLDEN_DROPLET_BOOST_MULTIPLIER,
-          endTime: Date.now() + GOLDEN_DROPLET_BOOST_DURATION * 1000,
+          multiplier: effectiveGoldenDropletConfig.BOOST_MULTIPLIER,
+          endTime: Date.now() + effectiveGoldenDropletConfig.BOOST_DURATION * 1000,
           source: 'Golden Droplet!'
-      };
-      setActiveBoosts(prev => [...prev, newBoost]);
-  }, [playSound]);
+      }];
+      
+      for(const pUpgrade of prestigeUpgrades) {
+          if (pUpgrade.level > 0 && pUpgrade.bonus.type === 'golden_droplet_secondary_boost') {
+              const bonus = pUpgrade.bonus;
+              newBoosts.push({
+                id: Date.now() + 1,
+                type: 'bps_multiplier',
+                multiplier: bonus.multiplier,
+                endTime: Date.now() + bonus.duration * 1000,
+                source: 'Gilded Essence'
+              });
+          }
+      }
+      
+      setActiveBoosts(prev => [...prev, ...newBoosts]);
+  }, [playSound, effectiveGoldenDropletConfig, prestigeUpgrades]);
 
   const handleGoldenDropletDisappeared = useCallback((id: number) => {
       setGoldenDroplets(prev => prev.filter(gc => gc.id !== id));
@@ -932,13 +1110,13 @@ const App: React.FC = () => {
         playSound(goldenChipClickSound);
         setShootingStars(prev => prev.map(ss => ss.id === id ? { ...ss, status: 'clicked' } : ss));
         
-        const eventConfig = RANDOM_EVENT_CONFIG.EVENTS.find(e => e.type === 'SHOOTING_STAR');
+        const eventConfig = effectiveRandomEventConfig.EVENTS.find(e => e.type === 'SHOOTING_STAR');
         if (eventConfig && eventConfig.type === 'SHOOTING_STAR') {
-            const reward = (cyclesPerSecond || 1) * 60 * eventConfig.rewardMinutesCps;
+            const reward = (cyclesPerSecond || 1) * 60 * (eventConfig.rewardMinutesCps || 2);
             setCycles(c => c + reward);
             setPlayerStats(p => ({ ...p, totalCyclesEarned: p.totalCyclesEarned + reward }));
         }
-    }, [playSound, cyclesPerSecond]);
+    }, [playSound, cyclesPerSecond, effectiveRandomEventConfig]);
 
     const handleShootingStarDisappeared = useCallback((id: number) => {
         setShootingStars(prev => prev.filter(ss => ss.id !== id));
@@ -951,7 +1129,7 @@ const App: React.FC = () => {
         
         let upgradesWithLevels = INITIAL_UPGRADES.map(initialUpgrade => {
             const savedUpgrade = savedUpgrades.find(u => u.id === initialUpgrade.id);
-            return savedUpgrade ? { ...initialUpgrade, level: savedUpgrade.level } : { ...initialUpgrade, level: 0 };
+            return savedUpgrade ? { ...initialUpgrade, level: savedUpgrade.level, isUnlocked: savedUpgrade.isUnlocked ?? !initialUpgrade.isSecret } : { ...initialUpgrade, level: 0, isUnlocked: !initialUpgrade.isSecret };
         });
         
         const savedPrestigeUpgradesMap = new Map(
@@ -973,6 +1151,10 @@ const App: React.FC = () => {
                     } else if (bonus.type === 'increase_power_multiplier') {
                          upgradesWithLevels = upgradesWithLevels.map(u => 
                             bonus.upgradeIds.includes(u.id) ? { ...u, power: u.power * bonus.multiplier } : u
+                        );
+                    } else if (bonus.type === 'unlock_upgrade') {
+                         upgradesWithLevels = upgradesWithLevels.map(u =>
+                            u.id === bonus.upgradeId ? { ...u, isUnlocked: true } : u
                         );
                     }
                 }
@@ -1100,7 +1282,7 @@ const App: React.FC = () => {
           className="p-3 rounded-full bg-slate-900/50 hover:bg-slate-800/80 text-slate-300 border border-slate-700 backdrop-blur-sm transition-all shadow-lg hover:shadow-pink-500/10 active:scale-95 hover:text-pink-300"
           aria-label="Open challenges"
         >
-          <StopwatchIcon />
+          <StopwatchIcon className="h-6 w-6" />
         </button>
         <button
           onClick={() => setIsAchievementsOpen(true)}
@@ -1155,7 +1337,7 @@ const App: React.FC = () => {
                     onAbandon={handleAbandonChallenge}
                 />
              ) : showPrestigeTracker ? (
-                <PrestigeTracker playerStats={playerStats} onPrestige={handlePrestige} />
+                <PrestigeTracker playerStats={playerStats} onPrestige={handlePrestige} prestigePointBonus={prestigeBonuses.prestige_point_bonus} />
              ) : (
                 <MilestoneTracker 
                     currentMilestone={currentMilestone}
@@ -1208,7 +1390,7 @@ const App: React.FC = () => {
                         onAbandon={handleAbandonChallenge}
                     />
                  ) : showPrestigeTracker ? (
-                    <PrestigeTracker playerStats={playerStats} onPrestige={handlePrestige} />
+                    <PrestigeTracker playerStats={playerStats} onPrestige={handlePrestige} prestigePointBonus={prestigeBonuses.prestige_point_bonus} />
                  ) : (
                     <MilestoneTracker 
                         currentMilestone={currentMilestone}
@@ -1277,7 +1459,7 @@ const App: React.FC = () => {
         cyclesPerClick={cyclesPerClick}
         cyclesPerSecond={cyclesPerSecond}
         prestigePoints={prestigePoints}
-        prestigePointsToGain={calculatePrestigePoints(playerStats.totalCyclesEarned)}
+        prestigePointsToGain={calculatePrestigePoints(playerStats.totalCyclesEarned, prestigeBonuses.prestige_point_bonus)}
         upgrades={upgrades}
         unlockedAchievementsCount={unlockedAchievements.size}
         completedChallengesCount={completedChallenges.size}

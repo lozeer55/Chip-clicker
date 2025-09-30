@@ -5,11 +5,12 @@ import { StarIcon, PRESTIGE_REQUIREMENT, calculatePrestigePoints, formatNumber }
 interface PrestigeTrackerProps {
   playerStats: PlayerStats;
   onPrestige: () => void;
+  prestigePointBonus: number;
 }
 
-const PrestigeTracker: React.FC<PrestigeTrackerProps> = ({ playerStats, onPrestige }) => {
+const PrestigeTracker: React.FC<PrestigeTrackerProps> = ({ playerStats, onPrestige, prestigePointBonus }) => {
   const progress = Math.min(100, (playerStats.totalCyclesEarned / PRESTIGE_REQUIREMENT) * 100);
-  const pointsToGain = calculatePrestigePoints(playerStats.totalCyclesEarned);
+  const pointsToGain = calculatePrestigePoints(playerStats.totalCyclesEarned, prestigePointBonus);
   const canPrestige = progress >= 100;
 
   return (

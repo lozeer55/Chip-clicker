@@ -138,10 +138,8 @@ export const RocketIcon = (props: React.SVGProps<SVGSVGElement>) => (
 export const PlusCircleIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...props}><rect width="256" height="256" fill="none"/><circle cx="128" cy="128" r="96" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><line x1="88" y1="128" x2="168" y2="128" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><line x1="128" y1="88" x2="128" y2="168" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/></svg>
 );
-export const StopwatchIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 256 256">
-        <path d="M128,24A104,104,0,1,0,232,128,104.2,104.2,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64.2-148.2a8,8,0,0,1,0,11.3l-5.7,5.7a8,8,0,0,1-11.3,0,32.1,32.1,0,0,0-45.2,0,8,8,0,0,1-11.3,0l-5.7-5.7a8,8,0,0,1,0-11.3,48,48,0,0,1,68.2,0ZM128,88a8,8,0,0,1,8,8v48a8,8,0,0,1-16,0V96A8,8,0,0,1,128,88Z"/>
-    </svg>
+export const StopwatchIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...props}><rect width="256" height="256" fill="none"/><circle cx="128" cy="128" r="88" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><polyline points="128 88 128 128 168 128" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><line x1="128" y1="24" x2="128" y2="40" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><line x1="104" y1="24" x2="152" y2="24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/></svg>
 );
 export const MagicIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...props}><rect width="256" height="256" fill="none"/><path d="M128,24V56" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M128,200v32" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M204.9,73.1,182.3,95.7" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M73.7,160.3,51.1,182.9" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M56,128H24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M232,128H200" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M73.1,51.1,95.7,73.7" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M160.3,182.3,182.9,204.9" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/></svg>
@@ -211,6 +209,7 @@ export const UPGRADE_TIERS: UpgradeTier[] = [
       { id: 'galaxy_bottle', name: 'Galaxia en una Botella', description: '+1.9 Trillones de EPS', baseCost: 2.5e16, costGrowth: 1.58, level: 0, type: 'auto', power: 1.9e12, icon: <GalaxyIcon />, maxLevel: 100 },
       { id: 'nexus_of_reality', name: 'Nexo de la Realidad', description: '+12 Trillones de EPS', baseCost: 1.8e17, costGrowth: 1.60, level: 0, type: 'auto', power: 12e12, icon: <InfinityIcon />, maxLevel: 100 },
       { id: 'touch_of_creation', name: 'Toque de la Creación', description: '+70 Trillones por agitación', baseCost: 1.5e18, costGrowth: 1.64, level: 0, type: 'click', power: 70e12, icon: <InfinityIcon />, maxLevel: 100 },
+      { id: 'alchemical_singularity', name: 'Singularidad Alquímica', description: 'El fin y el principio. Genera cantidades incomprensibles de esencia.', baseCost: 1e24, costGrowth: 2, level: 0, type: 'auto', power: 1e18, icon: <GalaxyIcon />, maxLevel: 100, isSecret: true, isUnlocked: false },
     ]
   }
 ];
@@ -273,152 +272,357 @@ export const formatNumber = (num: number): string => {
 };
 
 // Golden Droplet Config
-export const GOLDEN_DROPLET_LIFESPAN = 8000; // ms
-export const GOLDEN_DROPLET_SPAWN_INTERVAL_MIN = 30000; // ms
-export const GOLDEN_DROPLET_SPAWN_INTERVAL_MAX = 90000; // ms
-export const GOLDEN_DROPLET_BOOST_MULTIPLIER = 10;
-export const GOLDEN_DROPLET_BOOST_DURATION = 12; // seconds
+export const BASE_GOLDEN_DROPLET_CONFIG = {
+    LIFESPAN: 8000, // ms
+    SPAWN_INTERVAL_MIN: 30000, // ms
+    SPAWN_INTERVAL_MAX: 90000, // ms
+    BOOST_MULTIPLIER: 10,
+    BOOST_DURATION: 12, // seconds
+};
 
 // Prestige Config
 export const PRESTIGE_REQUIREMENT = 1e12; // 1 Trillion essence
 
-export const calculatePrestigePoints = (totalCyclesEarned: number): number => {
+export const calculatePrestigePoints = (totalCyclesEarned: number, bonusMultiplier: number = 1): number => {
     if (totalCyclesEarned < PRESTIGE_REQUIREMENT) {
         return 0;
     }
     // Changed formula for faster prestige point gain
-    return Math.floor(10 * Math.pow(totalCyclesEarned / PRESTIGE_REQUIREMENT, 0.5));
+    const basePoints = Math.floor(10 * Math.pow(totalCyclesEarned / PRESTIGE_REQUIREMENT, 0.5));
+    return Math.floor(basePoints * bonusMultiplier);
 };
 
 export const PRESTIGE_UPGRADES: PrestigeUpgrade[] = [
     // --- Center Path ---
     {
-        id: 'perm_boost_1',
-        name: 'Fuente de Maná Permanente',
-        description: (level) => `Toda la generación de esencia aumenta permanentemente en un ${level}%.`,
+        id: 'perm_boost_1', name: 'Fuente de Maná Permanente',
+        description: (level) => `Toda la generación de esencia aumenta permanentemente en un ${level * 2}%.`,
         cost: (level) => Math.ceil(Math.pow(level + 1, 1.8)),
-        level: 0,
-        bonus: { type: 'all_cycles_multiplier', value: 0.01 },
-        icon: <StarIcon />,
-        x: 50, y: 10,
+        level: 0, maxLevel: 50,
+        bonus: { type: 'all_cycles_multiplier', value: 0.02 },
+        icon: <StarIcon />, x: 50, y: 15,
     },
     {
-        id: 'starting_cycles_1',
-        name: 'Herencia Alquímica',
-        description: (level) => `Comienza con ${(1000 * level).toLocaleString()} de esencia después de prestigiar.`,
+        id: 'starting_cycles_1', name: 'Herencia Alquímica',
+        description: (level) => `Comienza con ${(1000 * Math.pow(level, 2) + 1000 * level).toLocaleString()} de esencia después de prestigiar.`,
         cost: (level) => 2 * (level + 1),
-        level: 0,
-        maxLevel: 10,
-        bonus: { type: 'starting_cycles', value: 1000 },
-        icon: <RocketIcon />,
-        requires: 'perm_boost_1',
-        x: 50, y: 22,
+        level: 0, maxLevel: 10,
+        bonus: { type: 'starting_cycles', value: 1000 }, // Special handling in App.tsx
+        icon: <RocketIcon />, requires: 'perm_boost_1', x: 50, y: 25,
     },
     {
-        id: 'click_synergy_1',
-        name: 'Sinergia de Agitación',
+        id: 'click_synergy_1', name: 'Sinergia de Agitación',
         description: (level) => `Cada agitación también otorga un ${level * 0.1}% de tu EPS.`,
         cost: (level) => 10 * (level + 1),
-        level: 0,
-        maxLevel: 20,
+        level: 0, maxLevel: 20,
         bonus: { type: 'cps_to_click_synergy', value: 0.001 },
-        icon: <PlusCircleIcon />,
-        requires: 'starting_cycles_1',
-        x: 50, y: 34,
+        icon: <PlusCircleIcon />, requires: 'starting_cycles_1', x: 50, y: 35,
     },
 
     // --- Left Path (Ascension) ---
     {
-        id: 'ascension_1',
-        name: 'Ascensión de Aprendiz',
+        id: 'ascension_1', name: 'Ascensión de Aprendiz',
         description: () => `Aumenta el nivel máximo de las mejoras de Alquimia de Aprendiz en +50.`,
-        cost: () => 15,
-        level: 0,
-        maxLevel: 1,
+        cost: () => 15, level: 0, maxLevel: 1,
         bonus: { type: 'increase_max_level', upgradeIds: ['stirring_rod', 'self_stir_cauldron', 'alchemist_wand', 'mystic_garden'], amount: 50 },
-        icon: <UpgradeCapIcon />,
-        requires: 'starting_cycles_1',
-        x: 35, y: 34,
+        icon: <UpgradeCapIcon />, requires: 'starting_cycles_1', x: 38, y: 28,
     },
     {
-        id: 'ascension_2',
-        name: 'Ascensión de Herbolaria',
+        id: 'ascension_2', name: 'Ascensión de Herbolaria',
         description: () => `Aumenta el nivel máximo de las mejoras de Herbolaria Avanzada en +50.`,
-        cost: () => 35,
-        level: 0,
-        maxLevel: 1,
+        cost: () => 35, level: 0, maxLevel: 1,
         requires: 'ascension_1',
         bonus: { type: 'increase_max_level', upgradeIds: ['potion_lab', 'infused_gloves', 'grimoire', 'moon_tears'], amount: 50 },
-        icon: <UpgradeCapIcon />,
-        x: 25, y: 45,
+        icon: <UpgradeCapIcon />, x: 28, y: 32,
     },
     {
-        id: 'ascension_3',
-        name: 'Ascensión de Transmutación',
+        id: 'ascension_3', name: 'Ascensión de Transmutación',
         description: () => `Aumenta el nivel máximo de las mejoras de Transmutación Experta en +50.`,
-        cost: () => 50,
-        level: 0,
-        maxLevel: 1,
+        cost: () => 50, level: 0, maxLevel: 1,
         requires: 'ascension_2',
         bonus: { type: 'increase_max_level', upgradeIds: ['scrying_pool', 'sunstone_catalyst', 'ethereal_portal', 'lunar_stir'], amount: 50 },
-        icon: <UpgradeCapIcon />,
-        x: 20, y: 60,
+        icon: <UpgradeCapIcon />, x: 20, y: 38,
     },
     {
-        id: 'ascension_4',
-        name: 'Ascensión Cósmica',
+        id: 'ascension_4', name: 'Ascensión Cósmica',
         description: () => `Aumenta el nivel máximo de las mejoras de Dominio Cósmico en +25.`,
-        cost: () => 100,
-        level: 0,
-        maxLevel: 1,
+        cost: () => 100, level: 0, maxLevel: 1,
         requires: 'ascension_3',
         bonus: { type: 'increase_max_level', upgradeIds: ['philosopher_stone', 'astral_foundry', 'solar_touch', 'world_tree'], amount: 25 },
-        icon: <UpgradeCapIcon />,
-        x: 15, y: 75,
+        icon: <UpgradeCapIcon />, x: 14, y: 46,
+    },
+     {
+        id: 'ascension_5', name: 'Ascensión de la Creación',
+        description: () => `Aumenta el nivel máximo de las mejoras de Arquitectura de la Creación en +25.`,
+        cost: () => 250, level: 0, maxLevel: 1,
+        requires: 'ascension_4',
+        bonus: { type: 'increase_max_level', upgradeIds: ['ley_lines', 'elemental_forge', 'galaxy_bottle', 'nexus_of_reality', 'touch_of_creation'], amount: 25 },
+        icon: <UpgradeCapIcon />, x: 10, y: 55,
     },
 
     // --- Right Path (Power) ---
     {
-        id: 'power_1',
-        name: 'Poder de Agitación',
+        id: 'power_1', name: 'Poder de Agitación',
         description: () => `La Varilla Agitadora Encantada es un 25% más potente.`,
-        cost: () => 25,
-        level: 0,
-        maxLevel: 1,
+        cost: () => 25, level: 0, maxLevel: 1,
         requires: 'starting_cycles_1',
         bonus: { type: 'increase_power_multiplier', upgradeIds: ['stirring_rod'], multiplier: 1.25 },
-        icon: <PowerIcon />,
-        x: 65, y: 34,
+        icon: <PowerIcon />, x: 62, y: 28,
     },
     {
-        id: 'power_2',
-        name: 'Poder del Jardín',
+        id: 'power_2', name: 'Poder del Jardín',
         description: () => `El Jardín de Hierbas Místicas es un 50% más potente.`,
-        cost: () => 40,
-        level: 0,
-        maxLevel: 1,
+        cost: () => 40, level: 0, maxLevel: 1,
         requires: 'power_1',
         bonus: { type: 'increase_power_multiplier', upgradeIds: ['mystic_garden'], multiplier: 1.5 },
-        icon: <PowerIcon />,
-        x: 75, y: 45,
+        icon: <PowerIcon />, x: 72, y: 32,
+    },
+    {
+        id: 'click_power_perm', name: 'Agitación Poderosa',
+        description: (level) => `Aumenta la potencia de todas las mejoras de agitación en un ${level * 5}%.`,
+        cost: (level) => 15 + Math.pow(level, 2) * 5,
+        level: 0, maxLevel: 10,
+        bonus: { type: 'increase_power_multiplier', upgradeIds: INITIAL_UPGRADES.filter(u => u.type === 'click').map(u => u.id), multiplier: 1.05 },
+        icon: <PotionIcon />, requires: 'power_2', x: 80, y: 38,
+    },
+    {
+        id: 'auto_power_perm', name: 'Maestría Automatizada',
+        description: (level) => `Aumenta la potencia de todas las mejoras automáticas en un ${level * 5}%.`,
+        cost: (level) => 20 + Math.pow(level, 2) * 6,
+        level: 0, maxLevel: 10,
+        bonus: { type: 'increase_power_multiplier', upgradeIds: INITIAL_UPGRADES.filter(u => u.type === 'auto').map(u => u.id), multiplier: 1.05 },
+        icon: <CauldronIcon />, requires: 'click_power_perm', x: 86, y: 46,
     },
      {
-        id: 'click_power_perm',
-        name: 'Agitación Poderosa',
-        description: (level) => `Aumenta la potencia de todas las mejoras de agitación en un 5%. (Acumulativo)`,
-        cost: (level) => 15 + Math.pow(level, 2) * 5,
-        level: 0,
-        maxLevel: 10,
-        bonus: {
-            type: 'increase_power_multiplier',
-            upgradeIds: INITIAL_UPGRADES.filter(u => u.type === 'click').map(u => u.id),
-            multiplier: 1.05
-        },
-        icon: <PotionIcon />,
+        id: 'first_in_tier_power', name: 'Catalizador de Esencia',
+        description: (level) => `La primera mejora de cada tier es un ${level * 20}% más potente.`,
+        cost: (level) => 150 + Math.pow(level, 2) * 25,
+        level: 0, maxLevel: 5,
+        bonus: { type: 'first_in_tier_bonus', multiplier: 1.20 },
+        icon: <ElementalIcon />, requires: 'auto_power_perm', x: 90, y: 55,
+    },
+
+    // --- Bottom Path (Fortune & Events) ---
+    {
+        id: 'fortunate_beginnings', name: 'Comienzos Afortunados',
+        description: (level) => `Las Gotas Doradas aparecen un ${level * 5}% más a menudo.`,
+        cost: (level) => 25 + (level * 5),
+        level: 0, maxLevel: 10,
+        bonus: { type: 'golden_droplet_chance', multiplier: 1.05 },
+        icon: <GoldenDropletIcon />, requires: 'click_synergy_1', x: 50, y: 48,
+    },
+    {
+        id: 'lingering_gold', name: 'Oro Persistente',
+        description: (level) => `Las Gotas Doradas permanecen en pantalla un ${level * 10}% más de tiempo.`,
+        cost: (level) => 30 + (level * 5),
+        level: 0, maxLevel: 5,
+        bonus: { type: 'golden_droplet_duration', multiplier: 1.10 },
+        icon: <GoldenDropletIcon />, requires: 'fortunate_beginnings', x: 50, y: 58,
+    },
+    {
+        id: 'gilded_essence', name: 'Esencia Dorada',
+        description: (level) => `Las Gotas Doradas son un ${level * 25}% más efectivas.`,
+        cost: (level) => 50 * (level + 1),
+        level: 0, maxLevel: 10,
+        bonus: { type: 'golden_droplet_effect', multiplier: 1.25 },
+        icon: <GoldenDropletIcon />, requires: 'lingering_gold', x: 50, y: 68,
+    },
+    {
+        id: 'fateful_whispers', name: 'Susurros del Destino',
+        description: (level) => `Los eventos aleatorios ocurren un ${level * 10}% más a menudo.`,
+        cost: (level) => 100 + (level * 20),
+        level: 0, maxLevel: 5,
+        bonus: { type: 'random_event_chance', multiplier: 1.10 },
+        icon: <MagicIcon />, requires: 'gilded_essence', x: 60, y: 78,
+    },
+    {
+        id: 'amplified_reality', name: 'Realidad Amplificada',
+        description: (level) => `Los efectos de los eventos aleatorios son un ${level * 10}% más fuertes.`,
+        cost: (level) => 120 + (level * 25),
+        level: 0, maxLevel: 5,
+        bonus: { type: 'random_event_effect', multiplier: 1.10 },
+        icon: <MagicIcon />, requires: 'fateful_whispers', x: 70, y: 85,
+    },
+     {
+        id: 'star_caller', name: 'Llamador de Estrellas',
+        description: () => `Una Estrella Fugaz aparece garantizada cada vez que prestigias.`,
+        cost: () => 500, level: 0, maxLevel: 1,
+        bonus: { type: 'unlock_upgrade', upgradeId: 'star_caller_ability' }, // Handled as a special case
+        icon: <StarIcon />, requires: 'amplified_reality', x: 80, y: 92,
+    },
+
+    // --- Top Path (Esoteric Knowledge) ---
+    {
+        id: 'knowledge_is_power', name: 'El Conocimiento es Poder',
+        description: (level) => `Cada logro desbloqueado otorga un +${level * 0.5}% a la producción global.`,
+        cost: (level) => 50 + Math.pow(level, 2) * 10,
+        level: 0, maxLevel: 10,
+        bonus: { type: 'achievement_bonus', multiplier_per_achievement: 0.005 },
+        icon: <TrophyIcon />, requires: 'perm_boost_1', x: 38, y: 12,
+    },
+    {
+        id: 'prestige_cascade', name: 'Cascada de Prestigio',
+        description: (level) => `Gana un ${level * 2}% más de Puntos de Prestigio.`,
+        cost: (level) => 100 + Math.pow(level, 2.2) * 15,
+        level: 0, maxLevel: 25,
+        bonus: { type: 'prestige_point_bonus', multiplier: 1.02 },
+        icon: <GalaxyIcon />, requires: 'knowledge_is_power', x: 28, y: 8,
+    },
+    {
+        id: 'alchemical_singularity', name: 'Singularidad Alquímica',
+        description: () => `Desbloquea la mejora final secreta.`,
+        cost: () => 1000, level: 0, maxLevel: 1,
+        bonus: { type: 'unlock_upgrade', upgradeId: 'alchemical_singularity' },
+        icon: <InfinityIcon />, requires: 'prestige_cascade', x: 18, y: 4,
+    },
+    
+    // --- Previous new upgrades ---
+    {
+        id: 'ultimate_ascension', name: 'Ascensión Definitiva',
+        description: () => `Aumenta el nivel máximo de TODAS las mejoras en +10.`,
+        cost: () => 500, level: 0, maxLevel: 1,
+        bonus: { type: 'increase_max_level', upgradeIds: INITIAL_UPGRADES.map(u => u.id), amount: 10 },
+        icon: <UpgradeCapIcon />, requires: 'ascension_5', x: 5, y: 65,
+    },
+    {
+        id: 'eternal_gold', name: 'Oro Eterno',
+        description: () => `Aumenta la duración de las Gotas Doradas en un 50% adicional.`,
+        cost: () => 100, level: 0, maxLevel: 1,
+        bonus: { type: 'golden_droplet_duration', multiplier: 1.50 },
+        icon: <GoldenDropletIcon />, requires: 'lingering_gold', x: 40, y: 62,
+    },
+    {
+        id: 'surge_affinity', name: 'Afinidad de Oleadas',
+        description: () => `Aumenta la duración de las Oleadas de Mejoras en un 50%.`,
+        cost: () => 150, level: 0, maxLevel: 1,
+        bonus: { type: 'random_event_effect', multiplier: 1.50 }, // Affects duration via the effect multiplier
+        icon: <MagicIcon />, requires: 'fateful_whispers', x: 40, y: 78,
+    },
+    {
+        id: 'herbalism_power', name: 'Poder de Herbolaria',
+        description: () => `Las mejoras de Herbolaria Avanzada son 4 veces más potentes.`,
+        cost: () => 60, level: 0, maxLevel: 1,
         requires: 'power_2',
-        x: 80, y: 60,
+        bonus: { type: 'increase_power_multiplier', upgradeIds: ['potion_lab', 'infused_gloves', 'grimoire', 'moon_tears'], multiplier: 4 },
+        icon: <PowerIcon />, x: 80, y: 28,
+    },
+    {
+        id: 'focused_stirring', name: 'Agitación Enfocada',
+        description: () => `La 'Varita de Alquimista' y la 'Agitación Lunar' son 3 veces más potentes.`,
+        cost: () => 90, level: 0, maxLevel: 1,
+        requires: 'click_power_perm',
+        bonus: { type: 'increase_power_multiplier', upgradeIds: ['alchemist_wand', 'lunar_stir'], multiplier: 3 },
+        icon: <PotionIcon />, x: 90, y: 32,
+    },
+
+    // --- NEW SYNERGY & MECHANICS UPGRADES ---
+    // Chronomancer Branch (Top-Right)
+    {
+        id: 'prestige_burst_essence', name: 'Explosión de Prestigio',
+        description: (level) => `Comienza cada prestigio con un ${level * 0.5}% de tus Puntos de Prestigio no gastados como esencia.`,
+        cost: (level) => 25 + Math.pow(level, 2) * 5, maxLevel: 10, level: 0,
+        bonus: { type: 'prestige_burst_essence', percent_of_pp: 0.005 },
+        icon: <RocketIcon />, requires: 'starting_cycles_1', x: 65, y: 20,
+    },
+    {
+        id: 'prestige_boost_click', name: 'Frenesí Temporal',
+        description: () => `Obtén un multiplicador de agitación de x10 durante los primeros 60 segundos después de prestigiar.`,
+        cost: () => 100, maxLevel: 1, level: 0,
+        bonus: { type: 'prestige_boost', boost_type: 'click', multiplier: 10, duration: 60 },
+        icon: <StopwatchIcon />, requires: 'prestige_burst_essence', x: 75, y: 15,
+    },
+    {
+        id: 'prestige_boost_eps', name: 'Flujo Temporal',
+        description: () => `Obtén un multiplicador de EPS de x5 durante los primeros 60 segundos después de prestigiar.`,
+        cost: () => 120, maxLevel: 1, level: 0,
+        bonus: { type: 'prestige_boost', boost_type: 'eps', multiplier: 5, duration: 60 },
+        icon: <StopwatchIcon />, requires: 'prestige_boost_click', x: 85, y: 10,
+    },
+    {
+        id: 'master_chronomancer', name: 'Maestro Crononauta',
+        description: (level) => `Aumenta la duración de los impulsos de prestigio en un ${level * 25}%.`,
+        cost: (level) => 200 * (level + 1), maxLevel: 4, level: 0,
+        bonus: { type: 'prestige_boost_duration_multiplier', multiplier: 1.25 },
+        icon: <StopwatchIcon />, requires: 'prestige_boost_eps', x: 95, y: 5,
+    },
+
+    // Meta/Knowledge Branch (Top-Center/Top-Left)
+    {
+        id: 'xp_multiplier', name: 'Saber Arcano',
+        description: (level) => `Gana un ${level * 10}% más de XP de todas las fuentes.`,
+        cost: (level) => 75 * (level + 1), maxLevel: 10, level: 0,
+        bonus: { type: 'xp_multiplier', multiplier: 1.10 },
+        icon: <TrophyIcon />, requires: 'knowledge_is_power', x: 50, y: 5,
+    },
+    {
+        id: 'meta_perm_boost', name: 'Esencia Amplificada',
+        description: (level) => `Aumenta la bonificación de 'Fuente de Maná Permanente' en un ${level * 10}% (multiplicativo).`,
+        cost: (level) => 150 + Math.pow(level, 2) * 20, maxLevel: 5, level: 0,
+        bonus: { type: 'meta_perm_boost_multiplier', multiplier: 1.10 },
+        icon: <StarIcon />, requires: 'xp_multiplier', x: 62, y: 8,
+    },
+    {
+        id: 'prestige_cost_reduction', name: 'Sabiduría Cósmica',
+        description: (level) => `Reduce el coste de todas las mejoras de prestigio en un ${level * 2}%.`,
+        cost: (level) => 200 + Math.pow(level, 2) * 30, maxLevel: 10, level: 0,
+        bonus: { type: 'prestige_cost_reduction', multiplier: 0.98 },
+        icon: <GalaxyIcon />, requires: 'prestige_cascade', x: 20, y: 0,
+    },
+    {
+        id: 'ascension_pp_synergy', name: 'Eco de Ascensión',
+        description: () => `Cada mejora de 'Ascensión' comprada aumenta la ganancia de Puntos de Prestigio en un 5%.`,
+        cost: () => 300, maxLevel: 1, level: 0,
+        bonus: { type: 'ascension_pp_synergy', multiplier: 1.05 },
+        icon: <PlusCircleIcon />, requires: ['ascension_2', 'prestige_cascade'], x: 20, y: 20,
+    },
+
+    // Synergy Branch (Center)
+    {
+        id: 'click_to_auto_synergy', name: 'Sinergia Cinética',
+        description: (level) => `El ${level * 0.1}% de tu poder de agitación total se añade a tu EPS total.`,
+        cost: (level) => 120 + (level * 20), maxLevel: 10, level: 0,
+        bonus: { type: 'click_to_auto_synergy', value: 0.001 },
+        icon: <PlusCircleIcon />, requires: 'click_synergy_1', x: 40, y: 40,
+    },
+    {
+        id: 'auto_to_click_synergy', name: 'Sinergia Potencial',
+        description: (level) => `El ${level * 0.01}% de tu EPS base se añade a tu poder de agitación base.`,
+        cost: (level) => 120 + (level * 20), maxLevel: 10, level: 0,
+        bonus: { type: 'auto_to_click_synergy', value: 0.0001 },
+        icon: <PlusCircleIcon />, requires: 'click_synergy_1', x: 60, y: 40,
+    },
+    {
+        id: 'synergy_nexus', name: 'Nexo de Sinergia',
+        description: () => `Triplica los efectos de todas las mejoras de Sinergia.`,
+        cost: () => 1000, maxLevel: 1, level: 0,
+        bonus: { type: 'increase_power_multiplier', upgradeIds: [], multiplier: 3 }, // Special handling in App.tsx
+        icon: <ElementalIcon />, requires: ['auto_to_click_synergy', 'click_to_auto_synergy'], x: 50, y: 41,
+    },
+
+    // Deeper Fortune & Power
+    {
+        id: 'golden_droplet_eps_boost', name: 'Lluvia Dorada',
+        description: () => `Las Gotas Doradas también otorgan un multiplicador de EPS de x2 durante 20 segundos.`,
+        cost: () => 400, maxLevel: 1, level: 0,
+        bonus: { type: 'golden_droplet_secondary_boost', boost_type: 'eps', multiplier: 2, duration: 20 },
+        icon: <GoldenDropletIcon />, requires: 'gilded_essence', x: 38, y: 72,
+    },
+    {
+        id: 'surge_discount_increase', name: 'Oleada Potenciada',
+        description: (level) => `Aumenta el descuento de la Oleada de Mejoras en un ${level * 2}% adicional.`,
+        cost: (level) => 180 + (level * 30), maxLevel: 5, level: 0,
+        bonus: { type: 'random_event_effect', multiplier: 1.05 }, // Simplified to use general effect
+        icon: <MagicIcon />, requires: 'amplified_reality', x: 62, y: 92,
+    },
+    {
+        id: 'catalyst_synergy', name: 'Doble Catalizador',
+        description: () => `La bonificación de 'Catalizador de Esencia' también se aplica a la segunda mejora de cada tier.`,
+        cost: () => 800, maxLevel: 1, level: 0,
+        bonus: { type: 'increase_power_multiplier', upgradeIds: [], multiplier: 1 }, // Special handling in App.tsx
+        icon: <ElementalIcon />, requires: 'first_in_tier_power', x: 95, y: 65,
     },
 ];
+
 
 // Daily Rewards Config
 export const DAILY_REWARDS: DailyReward[] = [
@@ -466,7 +670,7 @@ export const CHALLENGES: Challenge[] = [
 ];
 
 // Random Events Config
-export const RANDOM_EVENT_CONFIG = {
+export const BASE_RANDOM_EVENT_CONFIG = {
     TICK_INTERVAL: 15000, // Check for an event every 15 seconds
     EVENT_CHANCE: 0.30,   // 30% chance per tick
     EVENTS: [
