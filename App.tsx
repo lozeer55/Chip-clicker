@@ -19,9 +19,10 @@ import ChallengeToast from './components/ChallengeToast';
 import EventToast from './components/EventToast';
 import ShootingStar from './components/ShootingStar';
 import AdminModal from './components/AdminModal';
+import PrestigeTracker from './components/PrestigeTracker';
 import type { Upgrade, FloatingNumberType, GameSettings, PlayerStats, Achievement, ActiveBoost, MilestoneToastInfo, AchievementToastInfo, GoldenDropletType, SaveState, MobileView, PrestigeUpgrade, Challenge, ActiveChallengeState, ChallengeToastInfo, EventToastInfo, ShootingStarType } from './types';
 // FIX: Imported `LightningIcon` to resolve "Cannot find name 'LightningIcon'" error.
-import { INITIAL_UPGRADES, SettingsIcon, MILESTONES, ACHIEVEMENTS, AchievementIcon, ChartBarIcon, GOLDEN_DROPLET_LIFESPAN, GOLDEN_DROPLET_SPAWN_INTERVAL_MIN, GOLDEN_DROPLET_SPAWN_INTERVAL_MAX, GOLDEN_DROPLET_BOOST_MULTIPLIER, GOLDEN_DROPLET_BOOST_DURATION, PRESTIGE_UPGRADES, calculatePrestigePoints, DAILY_REWARDS, CHALLENGES, StopwatchIcon, RANDOM_EVENT_CONFIG, MagicIcon, LightningIcon, AdminIcon } from './constants';
+import { INITIAL_UPGRADES, SettingsIcon, MILESTONES, ACHIEVEMENTS, AchievementIcon, ChartBarIcon, GOLDEN_DROPLET_LIFESPAN, GOLDEN_DROPLET_SPAWN_INTERVAL_MIN, GOLDEN_DROPLET_SPAWN_INTERVAL_MAX, GOLDEN_DROPLET_BOOST_MULTIPLIER, GOLDEN_DROPLET_BOOST_DURATION, PRESTIGE_UPGRADES, calculatePrestigePoints, DAILY_REWARDS, CHALLENGES, StopwatchIcon, RANDOM_EVENT_CONFIG, MagicIcon, LightningIcon, AdminIcon, PRESTIGE_REQUIREMENT } from './constants';
 import { backgroundMusic, clickSound, milestoneSound, purchaseSound, achievementSound, goldenChipSpawnSound, goldenChipClickSound, prestigeSound } from './sounds';
 
 const SAVE_KEY = 'elixirClickerSave';
@@ -1046,6 +1047,7 @@ const App: React.FC = () => {
     }
   };
 
+  const showPrestigeTracker = (playerStats.totalPrestiges > 0 || playerStats.totalCyclesEarned > PRESTIGE_REQUIREMENT * 0.01);
 
   return (
     <div className="h-screen bg-transparent text-slate-200 flex flex-col overflow-hidden relative font-sans pb-20 lg:pb-0">
@@ -1133,6 +1135,8 @@ const App: React.FC = () => {
                     upgrades={upgrades}
                     onAbandon={handleAbandonChallenge}
                 />
+             ) : showPrestigeTracker ? (
+                <PrestigeTracker playerStats={playerStats} onPrestige={handlePrestige} />
              ) : (
                 <MilestoneTracker 
                     currentMilestone={currentMilestone}
@@ -1190,6 +1194,8 @@ const App: React.FC = () => {
                         upgrades={upgrades}
                         onAbandon={handleAbandonChallenge}
                     />
+                 ) : showPrestigeTracker ? (
+                    <PrestigeTracker playerStats={playerStats} onPrestige={handlePrestige} />
                  ) : (
                     <MilestoneTracker 
                         currentMilestone={currentMilestone}

@@ -74,6 +74,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle');
   const prestigePointsToGain = calculatePrestigePoints(totalCyclesEarned);
   const canPrestige = totalCyclesEarned >= PRESTIGE_REQUIREMENT;
+  const prestigeProgress = Math.min(100, (totalCyclesEarned / PRESTIGE_REQUIREMENT) * 100);
 
   const handleManualSaveClick = () => {
     onManualSave();
@@ -219,17 +220,30 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
 
           {/* Prestige Section */}
           <section>
-              <h3 className="font-bold text-lg mb-2 text-purple-300 flex items-center"><StarIcon className="h-5 w-5 mr-2" /> Prestige</h3>
+              <h3 className="font-bold text-lg mb-2 text-purple-300 flex items-center"><StarIcon className="h-5 w-5 mr-2" /> Prestigio</h3>
               <div className="p-4 bg-purple-500/10 rounded-lg border border-purple-500/30 space-y-3">
-                  <p className="text-sm text-slate-400">Reset your progress to gain Prestige Points, which can be used to purchase powerful permanent upgrades.</p>
+                  <p className="text-sm text-slate-400">Reinicia tu progreso para ganar Puntos de Prestigio, que pueden ser usados para comprar mejoras permanentes poderosas.</p>
+                  
+                  <div className="w-full bg-slate-700 rounded-full h-4 overflow-hidden border border-slate-600/80 mt-1 relative">
+                    <div
+                      className="bg-gradient-to-r from-pink-500 to-purple-500 h-full rounded-full transition-all duration-300 ease-out"
+                      style={{ width: `${prestigeProgress}%` }}
+                    ></div>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                        <p className="text-xs font-bold text-white" style={{textShadow: '0 1px 2px rgba(0,0,0,0.5)'}}>
+                            {formatNumber(Math.floor(totalCyclesEarned))} / {formatNumber(PRESTIGE_REQUIREMENT)}
+                        </p>
+                    </div>
+                  </div>
+
                   <div className="text-center bg-slate-700/50 p-3 rounded-md">
-                      <p className="text-slate-400 text-sm">On prestige, you will gain:</p>
+                      <p className="text-slate-400 text-sm">Al prestigiar, ganarás:</p>
                       <p className="text-2xl font-bold font-mono text-purple-300">{formatNumber(prestigePointsToGain)} PP</p>
                   </div>
                   
                   {!canPrestige &&
                       <div className="text-center text-sm text-amber-400">
-                         Requires {formatNumber(PRESTIGE_REQUIREMENT)} total essence earned.
+                         Requiere {formatNumber(PRESTIGE_REQUIREMENT)} de esencia total ganada.
                       </div>
                   }
 
@@ -238,7 +252,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
                       disabled={!canPrestige}
                       className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 active:scale-95 disabled:bg-slate-600 disabled:cursor-not-allowed"
                   >
-                      Prestige
+                      Prestigio
                   </button>
               </div>
           </section>
@@ -247,15 +261,15 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
           
           {/* Danger Zone Section */}
           <section>
-            <h3 className="font-bold text-lg mb-2 text-red-500">Danger Zone</h3>
+            <h3 className="font-bold text-lg mb-2 text-red-500">Zona de Peligro</h3>
             <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/30">
                 <button
                     onClick={onReset}
                     className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 active:scale-95"
                 >
-                    Reset Game Progress
+                    Reiniciar Progreso del Juego
                 </button>
-                <p className="text-xs text-center mt-2 text-red-400">This action cannot be undone.</p>
+                <p className="text-xs text-center mt-2 text-red-400">Esta acción no se puede deshacer.</p>
             </div>
           </section>
         </div>
