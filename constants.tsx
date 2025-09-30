@@ -143,6 +143,10 @@ export const StopwatchIcon = () => (
         <path d="M128,24A104,104,0,1,0,232,128,104.2,104.2,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64.2-148.2a8,8,0,0,1,0,11.3l-5.7,5.7a8,8,0,0,1-11.3,0,32.1,32.1,0,0,0-45.2,0,8,8,0,0,1-11.3,0l-5.7-5.7a8,8,0,0,1,0-11.3,48,48,0,0,1,68.2,0ZM128,88a8,8,0,0,1,8,8v48a8,8,0,0,1-16,0V96A8,8,0,0,1,128,88Z"/>
     </svg>
 );
+export const MagicIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...props}><rect width="256" height="256" fill="none"/><path d="M128,24V56" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M128,200v32" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M204.9,73.1,182.3,95.7" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M73.7,160.3,51.1,182.9" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M56,128H24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M232,128H200" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M73.1,51.1,95.7,73.7" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M160.3,182.3,182.9,204.9" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/></svg>
+);
+
 
 const UpgradeCapIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...props}><rect width="256" height="256" fill="none"/><polyline points="48 160 128 80 208 160" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><line x1="128" y1="80" x2="128" y2="224" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><line x1="80" y1="32" x2="176" y2="32" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/></svg>
@@ -155,96 +159,54 @@ const PowerIcon = (props: React.SVGProps<SVGSVGElement>) => (
 
 export const UPGRADE_TIERS: UpgradeTier[] = [
   {
-    name: "Alquimia Básica",
+    name: "Alquimia de Aprendiz",
     unlockCondition: { type: 'none' },
     upgrades: [
-      { id: 'stirring_rod', name: 'Varilla Agitadora Encantada', description: '+1 esencia por agitación', baseCost: 50, costGrowth: 1.25, level: 0, type: 'click', power: 1, icon: <PotionIcon />, maxLevel: 100 },
-      { id: 'self_stir_cauldron', name: 'Caldero Autorevolvedor', description: '+1 esencia por segundo', baseCost: 500, costGrowth: 1.28, level: 0, type: 'auto', power: 1, icon: <CauldronIcon />, maxLevel: 100 },
+      { id: 'stirring_rod', name: 'Varilla Agitadora Encantada', description: '+1 esencia por agitación', baseCost: 30, costGrowth: 1.22, level: 0, type: 'click', power: 1, icon: <PotionIcon />, maxLevel: 100 },
+      { id: 'self_stir_cauldron', name: 'Caldero Autorevolvedor', description: '+1 esencia por segundo', baseCost: 150, costGrowth: 1.28, level: 0, type: 'auto', power: 1, icon: <CauldronIcon />, maxLevel: 100 },
+      { id: 'alchemist_wand', name: 'Varita de Alquimista', description: '+7 de esencia por agitación', baseCost: 1100, costGrowth: 1.26, level: 0, type: 'click', power: 7, icon: <PotionIcon />, maxLevel: 100 },
+      { id: 'mystic_garden', name: 'Jardín de Hierbas Místicas', description: '+8 esencia por segundo', baseCost: 5000, costGrowth: 1.32, level: 0, type: 'auto', power: 8, icon: <MandrakeIcon />, maxLevel: 100 },
     ]
   },
   {
-    name: "Estudios de Herbolaria",
-    unlockCondition: { type: 'totalLevels', requiredLevels: 10 },
+    name: "Herbolaria Avanzada",
+    unlockCondition: { type: 'totalLevels', requiredLevels: 50 },
     upgrades: [
-      { id: 'alchemist_wand', name: 'Varita de Alquimista', description: '+8 de esencia por agitación', baseCost: 5000, costGrowth: 1.30, level: 0, type: 'click', power: 8, icon: <PotionIcon />, maxLevel: 100 },
-      { id: 'mystic_garden', name: 'Jardín de Hierbas Místicas', description: '+6 esencia por segundo', baseCost: 12000, costGrowth: 1.29, level: 0, type: 'auto', power: 6, icon: <MandrakeIcon />, maxLevel: 100 },
+      { id: 'potion_lab', name: 'Laboratorio de Pociones', description: '+45 de esencia por segundo', baseCost: 40000, costGrowth: 1.36, level: 0, type: 'auto', power: 45, icon: <MortarAndPestleIcon />, maxLevel: 100 },
+      { id: 'infused_gloves', name: 'Guantes de Toque Infuso', description: '+280 por agitación', baseCost: 250000, costGrowth: 1.30, level: 0, type: 'click', power: 280, icon: <PotionIcon />, maxLevel: 100 },
+      { id: 'grimoire', name: 'Grimorio de Elaboración', description: '+1,100 de esencia por segundo', baseCost: 1.5e6, costGrowth: 1.39, level: 0, type: 'auto', power: 1100, icon: <SpellbookIcon />, maxLevel: 100 },
+      { id: 'moon_tears', name: 'Lágrimas de la Luna', description: '+6,000 esencia por segundo', baseCost: 1e7, costGrowth: 1.40, level: 0, type: 'auto', power: 6000, icon: <MoonIcon />, maxLevel: 100 },
     ]
   },
   {
-    name: "Alquimia Celestial",
-    unlockCondition: { type: 'totalLevels', requiredLevels: 10 },
-    upgrades: [
-      { id: 'moon_tears', name: 'Tears of the Moon', description: '+500 esencia por segundo', baseCost: 3e6, costGrowth: 1.32, level: 0, type: 'auto', power: 500, icon: <MoonIcon />, maxLevel: 100 },
-      { id: 'sunstone_catalyst', name: 'Sunstone Catalyst', description: '+750 esencia por segundo', baseCost: 4e6, costGrowth: 1.33, level: 0, type: 'auto', power: 750, icon: <SunIcon />, maxLevel: 100 }
-    ]
-  },
-  {
-    name: "Preparación Avanzada",
-    unlockCondition: { type: 'totalLevels', requiredLevels: 25 },
-    upgrades: [
-      { id: 'potion_lab', name: 'Laboratorio de Pociones', description: '+40 de esencia por segundo', baseCost: 150000, costGrowth: 1.30, level: 0, type: 'auto', power: 40, icon: <MortarAndPestleIcon />, maxLevel: 100 },
-    ]
-  },
-  {
-    name: "Transmutación",
-    unlockCondition: { type: 'totalLevels', requiredLevels: 40 },
-    upgrades: [
-      { id: 'infused_gloves', name: 'Guantes de Toque Infuso', description: '+100 por agitación', baseCost: 1e6, costGrowth: 1.35, level: 0, type: 'click', power: 100, icon: <PotionIcon />, maxLevel: 100 },
-      { id: 'grimoire', name: 'Grimorio de Elaboración', description: '+150 de esencia por segundo', baseCost: 1.2e6, costGrowth: 1.31, level: 0, type: 'auto', power: 150, icon: <SpellbookIcon />, maxLevel: 100 },
-    ]
-  },
-  {
-    name: "Adivinación",
-    unlockCondition: { type: 'totalLevels', requiredLevels: 55 },
-    upgrades: [
-        { id: 'scrying_pool', name: 'Piscina de Adivinación', description: '+200 de esencia por segundo', baseCost: 5e6, costGrowth: 1.32, level: 0, type: 'auto', power: 200, icon: <CrystalBallIcon />, maxLevel: 100 },
-    ]
-  },
-  {
-    name: "Alquimia Etérea",
-    unlockCondition: { type: 'totalLevels', requiredLevels: 70 },
-    upgrades: [
-        { id: 'ethereal_portal', name: 'Portal Etéreo', description: '+1,200 esencia por segundo', baseCost: 6e7, costGrowth: 1.33, level: 0, type: 'auto', power: 1200, icon: <RuneStoneIcon />, maxLevel: 100 },
-    ]
-  },
-  {
-    name: "Alquimia Cósmica",
-    unlockCondition: { type: 'totalLevels', requiredLevels: 90 },
-    upgrades: [
-        { id: 'lunar_stir', name: 'Agitación Lunar', description: '+1,000 por agitación', baseCost: 7.5e7, costGrowth: 1.38, level: 0, type: 'click', power: 1000, icon: <MoonIcon />, maxLevel: 100 },
-        { id: 'philosopher_stone', name: 'Piedra Filosofal', description: '+1,500 de esencia por segundo', baseCost: 9e7, costGrowth: 1.34, level: 0, type: 'auto', power: 1500, icon: <PhilosopherStoneIcon />, maxLevel: 100 },
-    ]
-  },
-  {
-    name: "Tecnología Arcana",
-    unlockCondition: { type: 'totalLevels', requiredLevels: 120 },
-    upgrades: [
-      { id: 'astral_foundry', name: 'Fundición Astral', description: '+12,000 EPS', baseCost: 1.5e9, costGrowth: 1.35, level: 0, type: 'auto', power: 12000, icon: <SunIcon />, maxLevel: 100 },
-      { id: 'solar_touch', name: 'Toque Solar', description: '+10,000 por agitación', baseCost: 2e9, costGrowth: 1.39, level: 0, type: 'click', power: 10000, icon: <SunIcon />, maxLevel: 100 },
-    ]
-  },
-  {
-    name: "Dominio de la Creación",
+    name: "Transmutación Experta",
     unlockCondition: { type: 'totalLevels', requiredLevels: 150 },
     upgrades: [
-      { id: 'world_tree', name: 'Savia del Árbol del Mundo', description: '+80,000 EPS', baseCost: 2.5e10, costGrowth: 1.36, level: 0, type: 'auto', power: 80000, icon: <TreeIcon />, maxLevel: 100 },
-      { id: 'ley_lines', name: 'Aprovechar Líneas Ley', description: '+150,000 EPS', baseCost: 5e10, costGrowth: 1.37, level: 0, type: 'auto', power: 150000, icon: <AmuletIcon />, maxLevel: 100 },
+        { id: 'scrying_pool', name: 'Piscina de Adivinación', description: '+35,000 de esencia por segundo', baseCost: 8e7, costGrowth: 1.42, level: 0, type: 'auto', power: 35000, icon: <CrystalBallIcon />, maxLevel: 100 },
+        { id: 'sunstone_catalyst', name: 'Catalizador de Piedra Solar', description: '+200,000 esencia por segundo', baseCost: 5e8, costGrowth: 1.44, level: 0, type: 'auto', power: 200000, icon: <SunIcon />, maxLevel: 100 },
+        { id: 'ethereal_portal', name: 'Portal Etéreo', description: '+1.1 Millones de esencia por segundo', baseCost: 3e9, costGrowth: 1.46, level: 0, type: 'auto', power: 1.1e6, icon: <RuneStoneIcon />, maxLevel: 100 },
+        { id: 'lunar_stir', name: 'Agitación Lunar', description: '+5.5 Millones por agitación', baseCost: 2e10, costGrowth: 1.38, level: 0, type: 'click', power: 5.5e6, icon: <MoonIcon />, maxLevel: 100 },
     ]
   },
   {
-    name: "Maestría Elemental",
-    unlockCondition: { type: 'totalLevels', requiredLevels: 180 },
+    name: "Dominio Cósmico",
+    unlockCondition: { type: 'totalLevels', requiredLevels: 300 },
     upgrades: [
-      { id: 'elemental_forge', name: 'Forja Elemental', description: '+1.2 Millones de EPS', baseCost: 8e11, costGrowth: 1.38, level: 0, type: 'auto', power: 1.2e6, icon: <ElementalIcon />, maxLevel: 100 },
-      { id: 'galaxy_bottle', name: 'Galaxia en una Botella', description: '+2.5 Millones de EPS', baseCost: 1.5e12, costGrowth: 1.39, level: 0, type: 'auto', power: 2.5e6, icon: <GalaxyIcon />, maxLevel: 100 },
+        { id: 'philosopher_stone', name: 'Piedra Filosofal', description: '+38 Millones de esencia por segundo', baseCost: 1.8e11, costGrowth: 1.48, level: 0, type: 'auto', power: 38e6, icon: <PhilosopherStoneIcon />, maxLevel: 100 },
+        { id: 'astral_foundry', name: 'Fundición Astral', description: '+200 Millones de EPS', baseCost: 1e12, costGrowth: 1.50, level: 0, type: 'auto', power: 200e6, icon: <SunIcon />, maxLevel: 100 },
+        { id: 'solar_touch', name: 'Toque Solar', description: '+1.1 Billones por agitación', baseCost: 8e12, costGrowth: 1.42, level: 0, type: 'click', power: 1.1e9, icon: <SunIcon />, maxLevel: 100 },
+        { id: 'world_tree', name: 'Savia del Árbol del Mundo', description: '+7 Billones de EPS', baseCost: 5e13, costGrowth: 1.52, level: 0, type: 'auto', power: 7e9, icon: <TreeIcon />, maxLevel: 100 },
     ]
   },
   {
-    name: "Poder Absoluto",
-    unlockCondition: { type: 'totalLevels', requiredLevels: 220 },
+    name: "Arquitectura de la Creación",
+    unlockCondition: { type: 'totalLevels', requiredLevels: 500 },
     upgrades: [
-      { id: 'nexus_of_reality', name: 'Nexo de la Realidad', description: '+50 Millones de EPS', baseCost: 3e14, costGrowth: 1.40, level: 0, type: 'auto', power: 5e7, icon: <InfinityIcon />, maxLevel: 100 },
-      { id: 'touch_of_creation', name: 'Toque de la Creación', description: '+1 Billón por agitación', baseCost: 1e15, costGrowth: 1.45, level: 0, type: 'click', power: 1e9, icon: <InfinityIcon />, maxLevel: 100 },
+      { id: 'ley_lines', name: 'Aprovechar Líneas Ley', description: '+48 Billones de EPS', baseCost: 4e14, costGrowth: 1.54, level: 0, type: 'auto', power: 48e9, icon: <AmuletIcon />, maxLevel: 100 },
+      { id: 'elemental_forge', name: 'Forja Elemental', description: '+280 Billones de EPS', baseCost: 3e15, costGrowth: 1.56, level: 0, type: 'auto', power: 280e9, icon: <ElementalIcon />, maxLevel: 100 },
+      { id: 'galaxy_bottle', name: 'Galaxia en una Botella', description: '+1.9 Trillones de EPS', baseCost: 2.5e16, costGrowth: 1.58, level: 0, type: 'auto', power: 1.9e12, icon: <GalaxyIcon />, maxLevel: 100 },
+      { id: 'nexus_of_reality', name: 'Nexo de la Realidad', description: '+12 Trillones de EPS', baseCost: 1.8e17, costGrowth: 1.60, level: 0, type: 'auto', power: 12e12, icon: <InfinityIcon />, maxLevel: 100 },
+      { id: 'touch_of_creation', name: 'Toque de la Creación', description: '+70 Trillones por agitación', baseCost: 1.5e18, costGrowth: 1.64, level: 0, type: 'click', power: 70e12, icon: <InfinityIcon />, maxLevel: 100 },
     ]
   }
 ];
@@ -290,7 +252,7 @@ export const GOLDEN_DROPLET_BOOST_MULTIPLIER = 10;
 export const GOLDEN_DROPLET_BOOST_DURATION = 12; // seconds
 
 // Prestige Config
-export const PRESTIGE_REQUIREMENT = 1e12; // 1 Trillion essence
+export const PRESTIGE_REQUIREMENT = 1e14; // 100 Trillion essence
 
 export const calculatePrestigePoints = (totalCyclesEarned: number): number => {
     if (totalCyclesEarned < PRESTIGE_REQUIREMENT) {
@@ -305,7 +267,7 @@ export const PRESTIGE_UPGRADES: PrestigeUpgrade[] = [
         id: 'perm_boost_1',
         name: 'Fuente de Maná Permanente',
         description: (level) => `Toda la generación de esencia aumenta permanentemente en un ${level}%.`,
-        cost: (level) => Math.ceil(Math.pow(level + 1, 1.5)),
+        cost: (level) => Math.ceil(Math.pow(level + 1, 1.8)),
         level: 0,
         bonus: { type: 'all_cycles_multiplier', value: 0.01 },
         icon: <StarIcon />
@@ -314,7 +276,7 @@ export const PRESTIGE_UPGRADES: PrestigeUpgrade[] = [
         id: 'starting_cycles_1',
         name: 'Herencia Alquímica',
         description: (level) => `Comienza con ${(1000 * level).toLocaleString()} de esencia después de prestigiar.`,
-        cost: (level) => 1 + level,
+        cost: (level) => 2 * (level + 1),
         level: 0,
         maxLevel: 10,
         bonus: { type: 'starting_cycles', value: 1000 },
@@ -324,7 +286,7 @@ export const PRESTIGE_UPGRADES: PrestigeUpgrade[] = [
         id: 'click_synergy_1',
         name: 'Sinergia de Agitación',
         description: (level) => `Cada agitación también otorga un ${level * 0.1}% de tu EPS.`,
-        cost: (level) => 5 * (level + 1),
+        cost: (level) => 10 * (level + 1),
         level: 0,
         maxLevel: 20,
         bonus: { type: 'cps_to_click_synergy', value: 0.001 },
@@ -335,7 +297,7 @@ export const PRESTIGE_UPGRADES: PrestigeUpgrade[] = [
         id: 'ascension_1',
         name: 'Ascensión de Aprendiz',
         description: (level) => `Aumenta el nivel máximo de las mejoras de Alquimia Básica en +50.`,
-        cost: () => 10,
+        cost: () => 15,
         level: 0,
         maxLevel: 1,
         bonus: { type: 'increase_max_level', upgradeIds: ['stirring_rod', 'self_stir_cauldron'], amount: 50 },
@@ -345,7 +307,7 @@ export const PRESTIGE_UPGRADES: PrestigeUpgrade[] = [
         id: 'power_1',
         name: 'Poder de Agitación',
         description: (level) => `La Varilla Agitadora es un 25% más potente.`,
-        cost: () => 15,
+        cost: () => 25,
         level: 0,
         maxLevel: 1,
         requires: 'ascension_1',
@@ -356,7 +318,7 @@ export const PRESTIGE_UPGRADES: PrestigeUpgrade[] = [
         id: 'ascension_2',
         name: 'Ascensión de Herbolaria',
         description: (level) => `Aumenta el nivel máximo de las mejoras de Herbolaria en +50.`,
-        cost: () => 20,
+        cost: () => 35,
         level: 0,
         maxLevel: 1,
         requires: 'ascension_1',
@@ -381,9 +343,9 @@ export const CHALLENGES: Challenge[] = [
     {
         id: 'earn_1m',
         name: 'Sprint de Esencia',
-        description: 'Gana 1 millón de esencia en menos de 5 minutos.',
+        description: 'Gana 5 millones de esencia en menos de 5 minutos.',
         duration: 300, // 5 minutes
-        objective: { type: 'earn_essence', value: 1e6 },
+        objective: { type: 'earn_essence', value: 5e6 },
         reward: { type: 'prestige_points', value: 5 },
         icon: <CauldronIcon />,
         unlockCondition: { type: 'prestiges', value: 1 }
@@ -391,9 +353,9 @@ export const CHALLENGES: Challenge[] = [
     {
         id: 'cauldron_50',
         name: 'Producción en Masa',
-        description: 'Lleva tu Caldero Autorevolvedor al nivel 50 en 5 minutos.',
+        description: 'Lleva tu Caldero Autorevolvedor al nivel 75 en 5 minutos.',
         duration: 300,
-        objective: { type: 'upgrade_level', upgradeId: 'self_stir_cauldron', value: 50 },
+        objective: { type: 'upgrade_level', upgradeId: 'self_stir_cauldron', value: 75 },
         reward: { type: 'prestige_points', value: 10 },
         icon: <CauldronIcon />,
         unlockCondition: { type: 'prestiges', value: 1 }
@@ -401,11 +363,37 @@ export const CHALLENGES: Challenge[] = [
     {
         id: 'earn_1b',
         name: 'Fiebre del Billón',
-        description: 'Gana 1 billón de esencia en menos de 3 minutos.',
+        description: 'Gana 10 billones de esencia en menos de 3 minutos.',
         duration: 180, // 3 minutes
-        objective: { type: 'earn_essence', value: 1e9 },
+        objective: { type: 'earn_essence', value: 1e10 },
         reward: { type: 'prestige_points', value: 25 },
         icon: <LightningIcon />,
         unlockCondition: { type: 'prestiges', value: 3 }
     }
 ];
+
+// Random Events Config
+export const RANDOM_EVENT_CONFIG = {
+    TICK_INTERVAL: 15000, // Check for an event every 15 seconds
+    EVENT_CHANCE: 0.30,   // 30% chance per tick
+    EVENTS: [
+        { 
+            type: 'ESSENCE_FRENZY', 
+            weight: 40,
+            duration: 15, // seconds
+            multiplier: 5,
+        },
+        { 
+            type: 'UPGRADE_SURGE', 
+            weight: 30,
+            duration: 20, // seconds
+            discount: 0.90, // 90% discount
+        },
+        { 
+            type: 'SHOOTING_STAR', 
+            weight: 30,
+            duration: 5, // seconds to cross screen
+            rewardMinutesCps: 2, // 2 minutes worth of CPS
+        },
+    ]
+};

@@ -16,8 +16,11 @@ import DailyRewardModal from './components/DailyRewardModal';
 import ChallengesModal from './components/ChallengesModal';
 import ChallengeTracker from './components/ChallengeTracker';
 import ChallengeToast from './components/ChallengeToast';
-import type { Upgrade, FloatingNumberType, GameSettings, PlayerStats, Achievement, ActiveBoost, MilestoneToastInfo, AchievementToastInfo, GoldenDropletType, SaveState, MobileView, PrestigeUpgrade, Challenge, ActiveChallengeState, ChallengeToastInfo } from './types';
-import { INITIAL_UPGRADES, SettingsIcon, MILESTONES, ACHIEVEMENTS, AchievementIcon, ChartBarIcon, GOLDEN_DROPLET_LIFESPAN, GOLDEN_DROPLET_SPAWN_INTERVAL_MIN, GOLDEN_DROPLET_SPAWN_INTERVAL_MAX, GOLDEN_DROPLET_BOOST_MULTIPLIER, GOLDEN_DROPLET_BOOST_DURATION, PRESTIGE_UPGRADES, calculatePrestigePoints, DAILY_REWARDS, CHALLENGES, StopwatchIcon } from './constants';
+import EventToast from './components/EventToast';
+import ShootingStar from './components/ShootingStar';
+import type { Upgrade, FloatingNumberType, GameSettings, PlayerStats, Achievement, ActiveBoost, MilestoneToastInfo, AchievementToastInfo, GoldenDropletType, SaveState, MobileView, PrestigeUpgrade, Challenge, ActiveChallengeState, ChallengeToastInfo, EventToastInfo, ShootingStarType } from './types';
+// FIX: Imported `LightningIcon` to resolve "Cannot find name 'LightningIcon'" error.
+import { INITIAL_UPGRADES, SettingsIcon, MILESTONES, ACHIEVEMENTS, AchievementIcon, ChartBarIcon, GOLDEN_DROPLET_LIFESPAN, GOLDEN_DROPLET_SPAWN_INTERVAL_MIN, GOLDEN_DROPLET_SPAWN_INTERVAL_MAX, GOLDEN_DROPLET_BOOST_MULTIPLIER, GOLDEN_DROPLET_BOOST_DURATION, PRESTIGE_UPGRADES, calculatePrestigePoints, DAILY_REWARDS, CHALLENGES, StopwatchIcon, RANDOM_EVENT_CONFIG, MagicIcon, LightningIcon } from './constants';
 import { backgroundMusic, clickSound, milestoneSound, purchaseSound, achievementSound, goldenChipSpawnSound, goldenChipClickSound, prestigeSound } from './sounds';
 
 const SAVE_KEY = 'elixirClickerSave';
@@ -169,10 +172,12 @@ const App: React.FC = () => {
   const [milestoneToast, setMilestoneToast] = useState<MilestoneToastInfo | null>(null);
   const [achievementToast, setAchievementToast] = useState<AchievementToastInfo | null>(null);
   const [challengeToast, setChallengeToast] = useState<ChallengeToastInfo | null>(null);
+  const [eventToast, setEventToast] = useState<EventToastInfo | null>(null);
   const [playerStats, setPlayerStats] = useState<PlayerStats>(initialStats);
   const [unlockedAchievements, setUnlockedAchievements] = useState<Set<string>>(initialUnlockedAchievements);
   const [completedChallenges, setCompletedChallenges] = useState<Set<string>>(initialCompletedChallenges);
   const [goldenDroplets, setGoldenDroplets] = useState<GoldenDropletType[]>([]);
+  const [shootingStars, setShootingStars] = useState<ShootingStarType[]>([]);
   const [activeMobileView, setActiveMobileView] = useState<MobileView>('main');
   const [hasInteracted, setHasInteracted] = useState(false);
   const [prestigePoints, setPrestigePoints] = useState<number>(initialPrestigePoints);
@@ -541,6 +546,100 @@ const App: React.FC = () => {
     }, [cycles, upgrades, activeChallenge, handleChallengeEnd]);
 
 
+    // Random Event Spawner
+    useEffect(() => {
+        const eventTimer = setInterval(() => {
+            if (Math.random() > RANDOM_EVENT_CONFIG.EVENT_CHANCE) return;
+            
+            const totalWeight = RANDOM_EVENT_CONFIG.EVENTS.reduce((sum, event) => sum + event.weight, 0);
+            let random = Math.random() * totalWeight;
+            
+            for (const event of RANDOM_EVENT_CONFIG.EVENTS) {
+                if (random < event.weight) {
+                    // Trigger this event
+                    switch (event.type) {
+                        case 'ESSENCE_FRENZY':
+                            playSound(milestoneSound);
+                            const now = Date.now();
+                            const endTime = now + event.duration * 1000;
+                            setActiveBoosts(prev => [
+                                ...prev,
+                                { id: now, type: 'click_multiplier', multiplier: event.multiplier, endTime, source: 'Essence Frenzy' },
+                                { id: now + 1, type: 'bps_multiplier', multiplier: event.multiplier, endTime, source: 'Essence Frenzy' }
+                            ]);
+                            setEventToast({
+                                id: now,
+                                title: '¡Frenesí de Esencia!',
+                                description: `¡Toda la ganancia de esencia x${event.multiplier} por ${event.duration} segundos!`,
+                                icon: <LightningIcon />
+                            });
+                            break;
+                        
+                        case 'UPGRADE_SURGE':
+                            const eligibleUpgrades = upgrades.filter(u => u.level > 0 && u.level < u.maxLevel && !u.surged);
+                            if (eligibleUpgrades.length > 0) {
+                                playSound(milestoneSound);
+                                const randomUpgrade = eligibleUpgrades[Math.floor(Math.random() * eligibleUpgrades.length)];
+                                setUpgrades(current => current.map(u => 
+                                    u.id === randomUpgrade.id 
+                                        ? { ...u, surged: { discount: event.discount, endTime: Date.now() + event.duration * 1000 } }
+                                        : u
+                                ));
+                                setEventToast({
+                                    id: Date.now(),
+                                    title: '¡Oleada de Mejoras!',
+                                    description: `${randomUpgrade.name} tiene un ${event.discount * 100}% de descuento por ${event.duration}s!`,
+                                    icon: <MagicIcon className="h-6 w-6" />
+                                });
+                            }
+                            break;
+
+                        case 'SHOOTING_STAR':
+                            playSound(goldenChipSpawnSound);
+                            const id = Date.now();
+                            const isFromLeft = Math.random() > 0.5;
+                            const startX = isFromLeft ? -100 : window.innerWidth + 100;
+                            const startY = -100;
+                            const endX = window.innerWidth - (isFromLeft ? -100 : window.innerWidth + 100);
+                            const endY = window.innerHeight + 100;
+                            setShootingStars(prev => [...prev, {
+                                id, startX, startY, endX, endY, duration: event.duration, status: 'visible'
+                            }]);
+                            break;
+                    }
+                    return; // Exit after triggering one event
+                }
+                random -= event.weight;
+            }
+
+        }, RANDOM_EVENT_CONFIG.TICK_INTERVAL);
+
+        return () => clearInterval(eventTimer);
+    }, [upgrades, playSound]);
+
+    // Upgrade Surge cleaner
+    useEffect(() => {
+        const surgeCleaner = setInterval(() => {
+            let needsUpdate = false;
+            const now = Date.now();
+            const cleanedUpgrades = upgrades.map(u => {
+                if (u.surged && now > u.surged.endTime) {
+                    needsUpdate = true;
+                    const { surged, ...rest } = u; // remove surged property
+                    return rest;
+                }
+                return u;
+            });
+
+            if (needsUpdate) {
+                setUpgrades(cleanedUpgrades);
+            }
+        }, 1000); // Check every second
+
+        return () => clearInterval(surgeCleaner);
+    }, [upgrades]);
+
+
   const handleChipClick = useCallback((e: React.MouseEvent<HTMLElement>) => {
     if(!hasInteracted) setHasInteracted(true);
     playSound(clickSound);
@@ -578,10 +677,13 @@ const App: React.FC = () => {
 
     let totalCost = 0;
     const { baseCost, costGrowth, level: currentLevel } = upgrade;
+    const discount = upgrade.surged?.discount || 0;
 
     // Calculate the total cost by summing the cost of each individual level
     for (let i = 0; i < levelsToBuy; i++) {
-        totalCost += Math.floor(baseCost * Math.pow(costGrowth, currentLevel + i));
+        let levelCost = Math.floor(baseCost * Math.pow(costGrowth, currentLevel + i));
+        levelCost *= (1 - discount);
+        totalCost += levelCost;
     }
 
     if (cycles >= totalCost) {
@@ -785,6 +887,21 @@ const App: React.FC = () => {
       setGoldenDroplets(prev => prev.filter(gc => gc.id !== id));
   }, []);
 
+    const handleShootingStarClick = useCallback((id: number) => {
+        playSound(goldenChipClickSound);
+        setShootingStars(prev => prev.map(ss => ss.id === id ? { ...ss, status: 'clicked' } : ss));
+        
+        const eventConfig = RANDOM_EVENT_CONFIG.EVENTS.find(e => e.type === 'SHOOTING_STAR');
+        if (eventConfig && eventConfig.type === 'SHOOTING_STAR') {
+            const reward = (cyclesPerSecond || 1) * 60 * eventConfig.rewardMinutesCps;
+            setCycles(c => c + reward);
+        }
+    }, [playSound, cyclesPerSecond]);
+
+    const handleShootingStarDisappeared = useCallback((id: number) => {
+        setShootingStars(prev => prev.filter(ss => ss.id !== id));
+    }, []);
+
   const handleLoadState = useCallback((loadedState: SaveState) => {
       if (!loadedState) return;
       try {
@@ -925,6 +1042,15 @@ const App: React.FC = () => {
               onClose={() => setChallengeToast(null)}
           />
       )}
+      {eventToast && (
+          <EventToast
+              key={eventToast.id}
+              title={eventToast.title}
+              description={eventToast.description}
+              icon={eventToast.icon}
+              onClose={() => setEventToast(null)}
+          />
+      )}
       <div className="absolute top-4 right-4 z-50 flex gap-2 items-center">
         <button
           onClick={() => setIsChallengesOpen(true)}
@@ -1054,6 +1180,14 @@ const App: React.FC = () => {
             goldenDroplet={gc}
             onClick={handleGoldenDropletClick}
             onDisappeared={handleGoldenDropletDisappeared}
+        />
+      ))}
+       {shootingStars.map((ss) => (
+        <ShootingStar
+            key={ss.id}
+            star={ss}
+            onClick={handleShootingStarClick}
+            onDisappeared={handleShootingStarDisappeared}
         />
       ))}
       <SettingsModal

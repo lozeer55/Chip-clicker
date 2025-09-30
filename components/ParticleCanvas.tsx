@@ -1,4 +1,5 @@
 
+
 import React, { useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
 
 const PARTICLE_COLORS = ['#a855f7', '#d946ef', '#f472b6', '#ecf0f1', '#a78bfa', '#c084fc'];
@@ -152,8 +153,8 @@ const ParticleCanvas = forwardRef<ParticleCanvasHandle, {}>((props, ref) => {
 
 
     const animate = () => {
-      // Clear the canvas for each new frame. This fixes the issue of a 
-      // semi-transparent overlay obscuring the UI.
+      // PERFORMANCE OPTIMIZATION: Use clearRect for fast, full canvas clearing
+      // This is much faster than filling with a semi-transparent color
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       particlesRef.current = particlesRef.current.filter(p => p.life > 0);
@@ -181,9 +182,9 @@ const ParticleCanvas = forwardRef<ParticleCanvasHandle, {}>((props, ref) => {
         ctx.translate(p.x, p.y);
         ctx.rotate(p.rotation);
         
-        // Add a glow effect to all particles
-        ctx.shadowBlur = p.size;
-        ctx.shadowColor = p.color;
+        // PERFORMANCE OPTIMIZATION: Removed shadowBlur and shadowColor.
+        // These properties are computationally expensive and can cause major frame drops
+        // when many particles are on screen.
 
         switch (p.shape) {
             case 'shockwave': {

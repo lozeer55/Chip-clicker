@@ -14,9 +14,11 @@ interface UpgradeItemProps {
 const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, buyAmount, isLocked, unlockMessage }) => {
   const calculateCost = useCallback((startLevel: number, numLevels: number) => {
     let totalCost = 0;
-    const { baseCost, costGrowth } = upgrade;
+    const { baseCost, costGrowth, surged } = upgrade;
+    const discount = surged?.discount || 0;
     for (let i = 0; i < numLevels; i++) {
-        totalCost += Math.floor(baseCost * Math.pow(costGrowth, startLevel + i));
+        const levelCost = Math.floor(baseCost * Math.pow(costGrowth, startLevel + i));
+        totalCost += Math.floor(levelCost * (1 - discount));
     }
     return totalCost;
   }, [upgrade]);
@@ -26,11 +28,12 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
     
     let levels = 0;
     let remainingCycles = cycles;
-    const { baseCost, costGrowth, level, maxLevel } = upgrade;
+    const { baseCost, costGrowth, level, maxLevel, surged } = upgrade;
+    const discount = surged?.discount || 0;
     const levelsRemaining = maxLevel - level;
 
     while (levels < levelsRemaining) {
-        const nextLevelCost = Math.floor(baseCost * Math.pow(costGrowth, level + levels));
+        const nextLevelCost = Math.floor(baseCost * Math.pow(costGrowth, level + levels) * (1 - discount));
         if (remainingCycles >= nextLevelCost) {
             remainingCycles -= nextLevelCost;
             levels++;
@@ -135,9 +138,15 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
   }
 
   const isMaxed = upgrade.level >= upgrade.maxLevel;
+  const isSurged = !!upgrade.surged;
 
   return (
-    <li className={`rounded-xl p-3 transition-all duration-200 bg-slate-800/60 hover:bg-slate-800/90 shadow-md hover:shadow-lg border ${animationClass} ${isShaking ? 'animate-shake' : ''} ${isAffordableForOne ? 'upgrade-affordable-glow' : 'border-slate-700/80'}`}>
+    <li className={`relative rounded-xl p-3 transition-all duration-200 bg-slate-800/60 hover:bg-slate-800/90 shadow-md hover:shadow-lg border ${animationClass} ${isShaking ? 'animate-shake' : ''} ${isSurged ? 'upgrade-surged-glow' : isAffordableForOne ? 'upgrade-affordable-glow' : 'border-slate-700/80'}`}>
+        {isSurged && (
+            <div className="absolute top-0 right-0 -mt-2 -mr-2 bg-cyan-400 text-cyan-900 text-xs font-bold px-2 py-0.5 rounded-full shadow-lg z-10">
+                ¡OFERTA!
+            </div>
+        )}
         <div className="flex flex-col sm:flex-row w-full items-start sm:items-center gap-3 text-left">
             {/* Left/Top section */}
             <div className="flex items-center gap-4 flex-grow min-w-0 w-full">
@@ -158,7 +167,7 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
                       onMouseEnter={() => setIsCostHovered(true)}
                       onMouseLeave={() => setIsCostHovered(false)}
                     >
-                      <div className={`text-base font-semibold transition-all font-mono tracking-tight ${isMaxed ? 'text-green-400' : canAfford ? 'text-pink-400 animate-cost-glow' : 'text-pink-400'}`}>
+                      <div className={`text-base font-semibold transition-all font-mono tracking-tight ${isMaxed ? 'text-green-400' : isSurged ? 'text-cyan-400' : canAfford ? 'text-pink-400 animate-cost-glow' : 'text-pink-400'}`}>
                           {isMaxed ? 'MAX' : `Cost: ${totalCost.toLocaleString()}`}
                       </div>
                       {!isMaxed && (
@@ -188,7 +197,7 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
                         aria-label={`Purchase ${levelsToBuy} levels of ${upgrade.name}`}
                         className={`w-full text-base font-bold py-3 px-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 active:scale-95 text-center
                             ${canAfford && !isMaxed
-                                ? 'bg-pink-600 hover:bg-pink-700 text-white button-affordable-glow' 
+                                ? isSurged ? 'bg-cyan-500 hover:bg-cyan-600 text-white button-affordable-glow' : 'bg-pink-600 hover:bg-pink-700 text-white button-affordable-glow' 
                                 : 'bg-slate-700 text-slate-500 cursor-not-allowed'
                             }`}
                         disabled={!canAfford || levelsToBuy <= 0 || isMaxed}

@@ -15,6 +15,10 @@ export interface Upgrade {
   // FIX: Changed icon type to be a ReactElement that accepts a className prop to allow props to be passed via React.cloneElement without type errors.
   icon: React.ReactElement<{ className?: string }>;
   maxLevel: number;
+  surged?: {
+      discount: number; // e.g., 0.9 for 90% off
+      endTime: number;
+  };
 }
 
 export interface UpgradeTier {
@@ -109,6 +113,24 @@ export interface GoldenDropletType {
   y: number; // percentage
   status: 'visible' | 'clicked' | 'missed';
 }
+
+export interface ShootingStarType {
+  id: number;
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  duration: number;
+  status: 'visible' | 'clicked' | 'missed';
+}
+
+export interface EventToastInfo {
+  id: number;
+  title: string;
+  description: string;
+  icon: React.ReactElement;
+}
+
 
 export type PrestigeBonus = 
     | { type: 'all_cycles_multiplier'; value: number }

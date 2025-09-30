@@ -53,7 +53,10 @@
             from { opacity: 1; transform: translateY(0) translateX(-50%) scale(1); }
             to { opacity: 0; transform: translateY(-100px) translateX(-50%) scale(0.8); }
         }
-        .animate-float-up { animation: float-up 1.2s ease-out forwards; }
+        .animate-float-up {
+            animation: float-up 1.2s ease-out forwards;
+            will-change: transform, opacity;
+        }
 
         @keyframes shake {
             10%, 90% { transform: translate3d(-1px, 0, 0); }
@@ -77,10 +80,14 @@
         .animate-chip-press { animation: chip-press-effect 0.15s ease-out; }
 
         @keyframes boost-glow {
-            0%, 100% { filter: drop-shadow(0 0 10px rgba(236, 72, 153, 0.5)); }
-            50% { filter: drop-shadow(0 0 20px rgba(236, 72, 153, 0.8)); }
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
-        .animate-boost-glow { animation: boost-glow 1.5s ease-in-out infinite; }
+        .animate-boost-glow {
+            animation: boost-glow 1.5s ease-in-out infinite;
+            filter: drop-shadow(0 0 15px rgba(236, 72, 153, 0.6));
+            will-change: transform;
+        }
         
         @keyframes slide-in-down {
             from { transform: translateY(-100%) translateX(-50%); opacity: 0; }
@@ -116,7 +123,10 @@
             from { transform: translateX(0) rotate(0deg); }
             to { transform: translateX(calc(100vw + 100px)) rotate(360deg); }
         }
-        .animate-float-across { animation: float-across linear infinite; }
+        .animate-float-across {
+            animation: float-across linear infinite;
+            will-change: transform;
+        }
         
         @keyframes tier-unlock {
             0% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); }
@@ -130,17 +140,60 @@
         }
         .animate-shine-pop { animation: shine-pop 0.6s ease-out; }
 
-        @keyframes purchase-feedback {
-            50% { transform: scale(1.02); background-color: rgba(236, 72, 153, 0.1); }
+        @keyframes purchase-feedback-scale {
+            50% { transform: scale(1.02); }
         }
-        .animate-purchase-feedback { animation: purchase-feedback 0.6s ease-out; }
+        @keyframes purchase-feedback-flash {
+            50% { opacity: 0.15; }
+        }
+        .animate-purchase-feedback {
+            position: relative;
+            animation: purchase-feedback-scale 0.6s ease-out;
+        }
+        .animate-purchase-feedback::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-color: #ec4899; /* pink-500 */
+            border-radius: inherit;
+            opacity: 0;
+            animation: purchase-feedback-flash 0.6s ease-out;
+            will-change: opacity;
+            pointer-events: none;
+        }
         
-        .button-affordable-glow { animation: cost-glow 2.5s infinite ease-in-out; }
-
-        .upgrade-affordable-glow {
-            animation: cost-glow 2.5s infinite ease-in-out;
-            border-color: rgba(236, 72, 153, 0.4);
+        /* New Performant Glow Animation using pseudo-elements */
+        @keyframes better-glow {
+            0%, 100% { opacity: 0.7; transform: scale(1.0); }
+            50% { opacity: 1; transform: scale(1.05); }
         }
+        .button-affordable-glow, .upgrade-affordable-glow {
+            position: relative;
+            z-index: 1;
+        }
+        .button-affordable-glow::before, .upgrade-affordable-glow::before {
+            content: '';
+            position: absolute;
+            inset: -3px; /* Control glow size */
+            z-index: -1;
+            background: radial-gradient(circle, rgba(236, 72, 153, 0.5) 0%, rgba(236, 72, 153, 0) 70%);
+            border-radius: inherit;
+            animation: better-glow 2.5s infinite ease-in-out;
+            will-change: opacity, transform;
+        }
+        .upgrade-affordable-glow { /* Keep border color for extra pop */
+            border-color: rgba(236, 72, 153, 0.4) !important;
+        }
+
+        /* New glow for Upgrade Surges */
+        .upgrade-surged-glow::before {
+             background: radial-gradient(circle, rgba(34, 211, 238, 0.6) 0%, rgba(34, 211, 238, 0) 70%);
+             animation: better-glow 1.5s infinite ease-in-out;
+        }
+        .upgrade-surged-glow {
+             border-color: rgba(34, 211, 238, 0.5) !important;
+        }
+
 
         @keyframes shine-wipe {
             0% { transform: translateX(-150%) skewX(-25deg); }
@@ -157,25 +210,37 @@
             animation: shine-wipe 0.7s ease-in-out;
             pointer-events: none;
         }
-
-        @keyframes cost-glow {
-            50% { box-shadow: 0 0 12px rgba(236, 72, 153, 0.6); }
-        }
         
         @keyframes activity-pulse {
-            50% { background-color: #f472b6; box-shadow: 0 0 6px #f472b6; }
+            from { transform: scale(0.8); opacity: 1; }
+            to { transform: scale(3); opacity: 0; }
         }
-        .animate-activity-pulse { animation: activity-pulse 2s infinite; }
+        .animate-activity-pulse {
+            animation: activity-pulse 1.5s infinite ease-out;
+            background-color: transparent !important;
+            border: 2px solid #ec4899;
+            will-change: transform, opacity;
+        }
         
         @keyframes cps-pulse {
-            50% { color: #fbcfe8; text-shadow: 0 0 5px rgba(236, 72, 153, 0.7); }
+            0%, 100% { transform: scale(1); filter: brightness(1.2); }
+            50% { transform: scale(1.03); filter: brightness(1.6); }
         }
-        .animate-cps-pulse { animation: cps-pulse 2.5s infinite ease-in-out; }
+        .animate-cps-pulse {
+            animation: cps-pulse 2.5s infinite ease-in-out;
+            text-shadow: 0 0 5px rgba(236, 72, 153, 0.5);
+            will-change: transform, filter;
+        }
 
         @keyframes cps-boost-glow {
-            50% { text-shadow: 0 0 12px rgba(236, 72, 153, 0.8); }
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
-        .animate-cps-boost-glow { animation: cps-boost-glow 1.5s infinite ease-in-out; }
+        .animate-cps-boost-glow {
+            animation: cps-boost-glow 1.5s infinite ease-in-out;
+            text-shadow: 0 0 8px rgba(236, 72, 153, 0.7);
+            will-change: transform;
+        }
 
         @keyframes subtle-gradient {
             0% { background-position: 0% 50%; }
@@ -222,6 +287,29 @@
         @keyframes stone-pulse {
             50% { filter: drop-shadow(0 0 8px rgba(192, 38, 211, 0.9)); }
         }
+
+        /* Shooting Star Animation */
+        @keyframes shooting-star {
+            from { transform: translate(var(--start-x), var(--start-y)) rotate(-45deg); opacity: 1; }
+            to { transform: translate(var(--end-x), var(--end-y)) rotate(-45deg); opacity: 1; }
+        }
+        .animate-shooting-star {
+            animation: shooting-star linear forwards;
+            will-change: transform;
+        }
+        .shooting-star-trail::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200%;
+            height: 4px;
+            background: linear-gradient(to left, transparent, rgba(255, 255, 255, 0.6));
+            border-radius: 2px;
+            transform-origin: 100% 50%;
+            transform: translateY(-50%) translateX(-100%) rotate(180deg);
+        }
+
     </style>
 </head>
 <body class="bg-slate-900 animate-subtle-gradient">
