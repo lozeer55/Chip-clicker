@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { GameSettings, SaveState } from '../types';
 import GoogleAuth from './GoogleAuth';
-import { calculatePrestigePoints, PRESTIGE_REQUIREMENT, StarIcon } from '../constants';
+import { calculatePrestigePoints, PRESTIGE_REQUIREMENT, StarIcon, formatNumber } from '../constants';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -224,12 +224,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
                   <p className="text-sm text-slate-400">Reset your progress to gain Prestige Points, which can be used to purchase powerful permanent upgrades.</p>
                   <div className="text-center bg-slate-700/50 p-3 rounded-md">
                       <p className="text-slate-400 text-sm">On prestige, you will gain:</p>
-                      <p className="text-2xl font-bold font-mono text-purple-300">{prestigePointsToGain.toLocaleString()} PP</p>
+                      <p className="text-2xl font-bold font-mono text-purple-300">{formatNumber(prestigePointsToGain)} PP</p>
                   </div>
                   
                   {!canPrestige &&
                       <div className="text-center text-sm text-amber-400">
-                         Requires {PRESTIGE_REQUIREMENT.toLocaleString()} total essence earned.
+                         Requires {formatNumber(PRESTIGE_REQUIREMENT)} total essence earned.
                       </div>
                   }
 

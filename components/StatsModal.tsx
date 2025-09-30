@@ -1,6 +1,6 @@
 import React from 'react';
 import type { PlayerStats, Upgrade } from '../types';
-import { PotionIcon, CauldronIcon, StarIcon, TrophyIcon, ACHIEVEMENTS, StopwatchIcon, CHALLENGES } from '../constants';
+import { PotionIcon, CauldronIcon, StarIcon, TrophyIcon, ACHIEVEMENTS, StopwatchIcon, CHALLENGES, formatNumber } from '../constants';
 
 // Props interface
 interface StatsModalProps {
@@ -21,7 +21,7 @@ interface StatsModalProps {
 const StatItem: React.FC<{ label: string; value: string | number }> = ({ label, value }) => (
     <div className="flex justify-between items-baseline py-2 border-b border-slate-600/50">
         <span className="text-slate-400">{label}</span>
-        <span className="font-bold text-slate-100 font-mono text-lg">{typeof value === 'number' ? value.toLocaleString() : value}</span>
+        <span className="font-bold text-slate-100 font-mono text-lg">{typeof value === 'number' ? formatNumber(value) : value}</span>
     </div>
 );
 
@@ -86,10 +86,10 @@ const StatsModal: React.FC<StatsModalProps> = ({
                     <section>
                         <SectionHeader title="General"><CauldronIcon className="h-5 w-5" /></SectionHeader>
                         <div className="space-y-1">
-                            <StatItem label="Esencia Actual" value={Math.floor(cycles).toLocaleString()} />
-                            <StatItem label="Esencia por Segundo" value={cyclesPerSecond.toLocaleString()} />
-                            <StatItem label="Esencia por Agitación" value={cyclesPerClick.toLocaleString()} />
-                            <StatItem label="Total de Esencia Ganada" value={Math.floor(stats.totalCyclesEarned).toLocaleString()} />
+                            <StatItem label="Esencia Actual" value={formatNumber(Math.floor(cycles))} />
+                            <StatItem label="Esencia por Segundo" value={formatNumber(cyclesPerSecond)} />
+                            <StatItem label="Esencia por Agitación" value={formatNumber(cyclesPerClick)} />
+                            <StatItem label="Total de Esencia Ganada" value={formatNumber(Math.floor(stats.totalCyclesEarned))} />
                         </div>
                     </section>
                     
@@ -97,8 +97,8 @@ const StatsModal: React.FC<StatsModalProps> = ({
                     <section>
                         <SectionHeader title="Agitación y Clics"><PotionIcon className="h-5 w-5" /></SectionHeader>
                         <div className="space-y-1">
-                            <StatItem label="Agitaciones Totales" value={stats.totalClicks.toLocaleString()} />
-                            <StatItem label="Gotas Doradas Atrapadas" value={(stats.goldenDropletsClicked || 0).toLocaleString()} />
+                            <StatItem label="Agitaciones Totales" value={formatNumber(stats.totalClicks)} />
+                            <StatItem label="Gotas Doradas Atrapadas" value={formatNumber(stats.goldenDropletsClicked || 0)} />
                         </div>
                     </section>
                     
@@ -108,8 +108,8 @@ const StatsModal: React.FC<StatsModalProps> = ({
                          <div className="space-y-1">
                             <StatItem label="Logros Desbloqueados" value={`${unlockedAchievementsCount} / ${ACHIEVEMENTS.length}`} />
                             <StatItem label="Desafíos Completados" value={`${completedChallengesCount} / ${CHALLENGES.length}`} />
-                            <StatItem label="Niveles de Mejora Totales" value={totalUpgradeLevels.toLocaleString()} />
-                            <StatItem label="Edificios de Laboratorio" value={buildingsOwned.toLocaleString()} />
+                            <StatItem label="Niveles de Mejora Totales" value={formatNumber(totalUpgradeLevels)} />
+                            <StatItem label="Edificios de Laboratorio" value={formatNumber(buildingsOwned)} />
                         </div>
                     </section>
                     
@@ -117,10 +117,10 @@ const StatsModal: React.FC<StatsModalProps> = ({
                     <section>
                         <SectionHeader title="Prestigio"><StarIcon className="h-5 w-5" /></SectionHeader>
                         <div className="space-y-1">
-                             <StatItem label="Puntos de Prestigio Actuales" value={prestigePoints.toLocaleString()} />
-                             <StatItem label="PP al reiniciar" value={prestigePointsToGain.toLocaleString()} />
-                             <StatItem label="Total de PP Ganados" value={stats.totalPrestigePointsEver.toLocaleString()} />
-                             <StatItem label="Veces prestigiadas" value={(stats.totalPrestiges || 0).toLocaleString()} />
+                             <StatItem label="Puntos de Prestigio Actuales" value={formatNumber(prestigePoints)} />
+                             <StatItem label="PP al reiniciar" value={formatNumber(prestigePointsToGain)} />
+                             <StatItem label="Total de PP Ganados" value={formatNumber(stats.totalPrestigePointsEver)} />
+                             <StatItem label="Veces prestigiadas" value={formatNumber(stats.totalPrestiges || 0)} />
                         </div>
                     </section>
                 </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { ActiveChallengeState, Upgrade } from '../types';
-import { StopwatchIcon } from '../constants';
+import { StopwatchIcon, formatNumber } from '../constants';
 
 interface ChallengeTrackerProps {
   activeChallenge: ActiveChallengeState;
@@ -71,7 +71,7 @@ const ChallengeTracker: React.FC<ChallengeTrackerProps> = ({ activeChallenge, cy
                     style={{ width: `${percent}%` }}
                 ></div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                    <p className="text-xs font-bold text-white text-shadow">{Math.floor(current).toLocaleString()} / {target.toLocaleString()}</p>
+                    <p className="text-xs font-bold text-white text-shadow">{formatNumber(Math.floor(current))} / {formatNumber(target)}</p>
                 </div>
             </div>
         </div>

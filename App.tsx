@@ -26,6 +26,12 @@ import { backgroundMusic, clickSound, milestoneSound, purchaseSound, achievement
 const SAVE_KEY = 'elixirClickerSave';
 const SETTINGS_KEY = 'elixirClickerSettings';
 
+type Notification = 
+  | ({ type: 'milestone' } & MilestoneToastInfo)
+  | ({ type: 'achievement' } & AchievementToastInfo)
+  | ({ type: 'challenge' } & ChallengeToastInfo)
+  | ({ type: 'event' } & EventToastInfo);
+
 // Load game state from localStorage
 const loadGame = (): { 
     initialCycles: number; 
@@ -169,10 +175,8 @@ const App: React.FC = () => {
   const [isChallengesOpen, setIsChallengesOpen] = useState(false);
   const [currentMilestoneIndex, setCurrentMilestoneIndex] = useState<number>(initialMilestoneIndex);
   const [activeBoosts, setActiveBoosts] = useState<ActiveBoost[]>([]);
-  const [milestoneToast, setMilestoneToast] = useState<MilestoneToastInfo | null>(null);
-  const [achievementToast, setAchievementToast] = useState<AchievementToastInfo | null>(null);
-  const [challengeToast, setChallengeToast] = useState<ChallengeToastInfo | null>(null);
-  const [eventToast, setEventToast] = useState<EventToastInfo | null>(null);
+  const [notificationQueue, setNotificationQueue] = useState<Notification[]>([]);
+  const [activeNotification, setActiveNotification] = useState<Notification | null>(null);
   const [playerStats, setPlayerStats] = useState<PlayerStats>(initialStats);
   const [unlockedAchievements, setUnlockedAchievements] = useState<Set<string>>(initialUnlockedAchievements);
   const [completedChallenges, setCompletedChallenges] = useState<Set<string>>(initialCompletedChallenges);
@@ -346,6 +350,15 @@ const App: React.FC = () => {
     }
   }, [settings]);
 
+  // Notification Queue Manager
+  useEffect(() => {
+    if (!activeNotification && notificationQueue.length > 0) {
+      const [nextNotification, ...rest] = notificationQueue;
+      setActiveNotification(nextNotification);
+      setNotificationQueue(rest);
+    }
+  }, [activeNotification, notificationQueue]);
+
   const currentMilestone = useMemo(() => {
     return MILESTONES[currentMilestoneIndex] || null;
   }, [currentMilestoneIndex]);
@@ -370,11 +383,12 @@ const App: React.FC = () => {
         ? `${reward.multiplier}x click power for ${reward.duration} seconds!`
         : `${reward.multiplier}x essence per second for ${reward.duration} seconds!`;
 
-      setMilestoneToast({
+      setNotificationQueue(prev => [...prev, {
+          type: 'milestone',
           id: Date.now(),
           name: currentMilestone.name,
           rewardDescription: rewardDescription
-      });
+      }]);
       setCurrentMilestoneIndex(prev => prev + 1);
     }
   }, [playerStats.xp, currentMilestone, playSound, activeChallenge]);
@@ -422,8 +436,17 @@ const App: React.FC = () => {
 
     if (newlyUnlocked.length > 0) {
         setUnlockedAchievements(prev => new Set([...prev, ...newlyUnlocked.map(a => a.id)]));
-        const firstNew = newlyUnlocked[0];
-        setAchievementToast({ id: Date.now(), name: firstNew.name, icon: firstNew.icon });
+        newlyUnlocked.forEach((ach, index) => {
+            // Stagger toast creation slightly to ensure unique IDs if they unlock in the same tick
+            setTimeout(() => {
+                setNotificationQueue(prev => [...prev, { 
+                    type: 'achievement', 
+                    id: Date.now() + index, 
+                    name: ach.name, 
+                    icon: ach.icon 
+                }]);
+            }, index * 50);
+        });
         playSound(achievementSound);
     }
   }, [playerStats, upgrades, unlockedAchievements, playSound]);
@@ -489,19 +512,21 @@ const App: React.FC = () => {
                 setPrestigePoints(prev => prev + challenge.reward.value);
             }
             setCompletedChallenges(prev => new Set([...prev, challenge.id]));
-            setChallengeToast({
+            setNotificationQueue(prev => [...prev, {
+                type: 'challenge',
                 id: Date.now(),
                 name: challenge.name,
                 status: 'success',
                 rewardDescription: `+${challenge.reward.value} Prestige Points`
-            });
+            }]);
         } else {
             // Optional: play failure sound
-            setChallengeToast({
+            setNotificationQueue(prev => [...prev, {
+                type: 'challenge',
                 id: Date.now(),
                 name: challenge.name,
                 status: 'failure',
-            });
+            }]);
         }
         
         setActiveChallenge(null);
@@ -567,12 +592,13 @@ const App: React.FC = () => {
                                 { id: now, type: 'click_multiplier', multiplier: event.multiplier, endTime, source: 'Essence Frenzy' },
                                 { id: now + 1, type: 'bps_multiplier', multiplier: event.multiplier, endTime, source: 'Essence Frenzy' }
                             ]);
-                            setEventToast({
+                            setNotificationQueue(prev => [...prev, {
+                                type: 'event',
                                 id: now,
                                 title: '¡Frenesí de Esencia!',
                                 description: `¡Toda la ganancia de esencia x${event.multiplier} por ${event.duration} segundos!`,
                                 icon: <LightningIcon />
-                            });
+                            }]);
                             break;
                         
                         case 'UPGRADE_SURGE':
@@ -585,12 +611,13 @@ const App: React.FC = () => {
                                         ? { ...u, surged: { discount: event.discount, endTime: Date.now() + event.duration * 1000 } }
                                         : u
                                 ));
-                                setEventToast({
+                                setNotificationQueue(prev => [...prev, {
+                                    type: 'event',
                                     id: Date.now(),
                                     title: '¡Oleada de Mejoras!',
                                     description: `${randomUpgrade.name} tiene un ${event.discount * 100}% de descuento por ${event.duration}s!`,
                                     icon: <MagicIcon className="h-6 w-6" />
-                                });
+                                }]);
                             }
                             break;
 
@@ -1017,40 +1044,24 @@ const App: React.FC = () => {
         onClaim={handleClaimDailyReward}
         streak={effectiveStreak}
       />
-      {milestoneToast && (
-        <MilestoneToast 
-            key={milestoneToast.id}
-            name={milestoneToast.name}
-            rewardDescription={milestoneToast.rewardDescription}
-            onClose={() => setMilestoneToast(null)}
-        />
-      )}
-      {achievementToast && (
-          <AchievementToast
-              key={achievementToast.id}
-              name={achievementToast.name}
-              icon={achievementToast.icon}
-              onClose={() => setAchievementToast(null)}
-          />
-      )}
-      {challengeToast && (
-          <ChallengeToast
-              key={challengeToast.id}
-              name={challengeToast.name}
-              status={challengeToast.status}
-              rewardDescription={challengeToast.rewardDescription}
-              onClose={() => setChallengeToast(null)}
-          />
-      )}
-      {eventToast && (
-          <EventToast
-              key={eventToast.id}
-              title={eventToast.title}
-              description={eventToast.description}
-              icon={eventToast.icon}
-              onClose={() => setEventToast(null)}
-          />
-      )}
+      {activeNotification && (() => {
+        const commonProps = {
+            key: activeNotification.id,
+            onClose: () => setActiveNotification(null),
+        };
+        switch (activeNotification.type) {
+            case 'milestone':
+                return <MilestoneToast {...activeNotification} {...commonProps} />;
+            case 'achievement':
+                return <AchievementToast {...activeNotification} {...commonProps} />;
+            case 'challenge':
+                return <ChallengeToast {...activeNotification} {...commonProps} />;
+            case 'event':
+                return <EventToast {...activeNotification} {...commonProps} />;
+            default:
+                return null;
+        }
+      })()}
       <div className="absolute top-4 right-4 z-50 flex gap-2 items-center">
         <button
           onClick={() => setIsChallengesOpen(true)}

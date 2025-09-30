@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Achievement, PlayerStats, Upgrade } from '../types';
-import { INITIAL_UPGRADES } from '../constants';
+import { INITIAL_UPGRADES, formatNumber } from '../constants';
 
 // Helper function to calculate achievement progress
 const getProgress = (
@@ -65,7 +65,7 @@ const AchievementItem: React.FC<AchievementItemProps> = ({ achievement, isUnlock
                <div className="w-full bg-slate-600 rounded-full h-2.5">
                    <div className="bg-pink-500 h-2.5 rounded-full" style={{ width: `${progress.percent}%` }}></div>
                </div>
-               <p className="text-xs text-slate-400 text-right mt-1 font-mono">{progress.current.toLocaleString()} / {progress.target.toLocaleString()}</p>
+               <p className="text-xs text-slate-400 text-right mt-1 font-mono">{formatNumber(progress.current)} / {formatNumber(progress.target)}</p>
            </div>
         )}
       </div>

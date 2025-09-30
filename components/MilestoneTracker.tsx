@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Milestone, PlayerStats } from '../types';
-import { TrophyIcon } from '../constants';
+import { TrophyIcon, formatNumber } from '../constants';
 
 interface MilestoneTrackerProps {
   currentMilestone: Milestone | null;
@@ -37,7 +37,7 @@ const MilestoneTracker: React.FC<MilestoneTrackerProps> = ({ currentMilestone, p
           </div>
         </div>
         <div className="text-center sm:text-right">
-            <p className="font-bold text-slate-200 text-lg leading-tight font-mono">{Math.floor(playerStats.xp).toLocaleString()} / {currentMilestone.xpRequired.toLocaleString()} XP</p>
+            <p className="font-bold text-slate-200 text-lg leading-tight font-mono">{formatNumber(Math.floor(playerStats.xp))} / {formatNumber(currentMilestone.xpRequired)} XP</p>
         </div>
       </div>
       <div className="w-full bg-slate-700 rounded-full h-4 overflow-hidden border border-slate-600/80 mt-1">

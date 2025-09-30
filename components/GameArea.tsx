@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import type { FloatingNumberType, ActiveBoost } from '../types';
 import FloatingNumber from './FloatingNumber';
-import { LightningIcon } from '../constants';
+import { LightningIcon, formatNumber } from '../constants';
 
 interface GameAreaProps {
   cycles: number;
@@ -128,7 +128,7 @@ const GameArea: React.FC<GameAreaProps> = ({
             </h1>
             <div className="mt-2">
                 <h2 className="text-5xl sm:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-pink-400 to-purple-400 tracking-tighter font-mono" style={{textShadow: '0 0 15px rgba(219, 39, 119, 0.4)'}}>
-                    {Math.floor(cycles).toLocaleString()}
+                    {formatNumber(Math.floor(cycles))}
                 </h2>
                 <p className="text-slate-400 font-medium text-lg tracking-wide">esencia</p>
             </div>
@@ -161,13 +161,13 @@ const GameArea: React.FC<GameAreaProps> = ({
             <div className="bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-center">
                 <p className="text-sm font-medium text-slate-400">por Agitación</p>
                 <strong className={`text-2xl font-bold text-slate-100 tracking-tight font-mono transition-all ${isClickBoostActive ? 'animate-cps-boost-glow' : ''}`}>
-                    {cyclesPerClick.toLocaleString()}
+                    {formatNumber(cyclesPerClick)}
                 </strong>
             </div>
             <div className="bg-slate-800/60 border border-slate-700 rounded-xl px-4 py-3 text-center">
                 <p className="text-sm font-medium text-slate-400">por Segundo</p>
                 <strong className={`text-2xl font-bold text-slate-100 tracking-tight font-mono transition-all ${isCpsBoostActive ? 'animate-cps-boost-glow' : ''}`}>
-                    {cyclesPerSecond.toLocaleString()}
+                    {formatNumber(cyclesPerSecond)}
                 </strong>
             </div>
         </div>

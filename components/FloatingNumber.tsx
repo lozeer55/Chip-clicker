@@ -1,5 +1,6 @@
 
 import React, { useEffect } from 'react';
+import { formatNumber } from '../constants';
 
 interface FloatingNumberProps {
   value: number;
@@ -29,7 +30,7 @@ const FloatingNumber: React.FC<FloatingNumberProps> = ({ value, x, y, onAnimatio
         textShadow: '0px 2px 4px rgba(0, 0, 0, 0.5)'
       }}
     >
-      +{value.toLocaleString()}
+      +{formatNumber(value)}
     </div>
   );
 };

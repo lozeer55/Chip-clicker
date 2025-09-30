@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import type { Upgrade, UpgradeTier, PrestigeUpgrade } from '../types';
-import { UPGRADE_TIERS, LockIcon, StarIcon, PRESTIGE_UPGRADES } from '../constants';
+import { UPGRADE_TIERS, LockIcon, StarIcon, PRESTIGE_UPGRADES, formatNumber } from '../constants';
 
 interface UpgradeItemProps {
   upgrade: Upgrade;
@@ -168,7 +168,7 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
                       onMouseLeave={() => setIsCostHovered(false)}
                     >
                       <div className={`text-base font-semibold transition-all font-mono tracking-tight ${isMaxed ? 'text-green-400' : isSurged ? 'text-cyan-400' : canAfford ? 'text-pink-400 animate-cost-glow' : 'text-pink-400'}`}>
-                          {isMaxed ? 'MAX' : `Cost: ${totalCost.toLocaleString()}`}
+                          {isMaxed ? 'MAX' : `Cost: ${formatNumber(totalCost)}`}
                       </div>
                       {!isMaxed && (
                           <div className={`absolute bottom-full left-1/2 -translate-x-1/2 mb-1 p-2 text-xs bg-slate-900 border border-slate-600 rounded-md text-slate-300 whitespace-nowrap transition-all duration-200 pointer-events-none ${isCostHovered ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-1'}`}>

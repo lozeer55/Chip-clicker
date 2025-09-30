@@ -244,6 +244,30 @@ export const ACHIEVEMENTS: Achievement[] = [
     { id: 'level3', name: 'Coleccionista', description: 'Posee al menos una de cada mejora.', icon: <TrophyIcon />, condition: { type: 'anyUpgradeLevel', value: 1 } },
 ];
 
+const NUM_ABBREVIATIONS: { value: number, symbol: string }[] = [
+    { value: 1e18, symbol: 'Quint' },
+    { value: 1e15, symbol: 'Quad' },
+    { value: 1e12, symbol: 'Trill' },
+    { value: 1e9, symbol: 'Bill' },
+    { value: 1e6, symbol: 'Mill' },
+];
+
+export const formatNumber = (num: number): string => {
+    const absNum = Math.abs(num);
+    if (absNum < 1_000_000) {
+        return Math.floor(num).toLocaleString();
+    }
+    
+    const tier = NUM_ABBREVIATIONS.find(abbr => absNum >= abbr.value);
+
+    if (tier) {
+        const value = num / tier.value;
+        return `${value.toFixed(1)}${tier.symbol}`;
+    }
+
+    return Math.floor(num).toLocaleString();
+};
+
 // Golden Droplet Config
 export const GOLDEN_DROPLET_LIFESPAN = 8000; // ms
 export const GOLDEN_DROPLET_SPAWN_INTERVAL_MIN = 30000; // ms
@@ -252,13 +276,14 @@ export const GOLDEN_DROPLET_BOOST_MULTIPLIER = 10;
 export const GOLDEN_DROPLET_BOOST_DURATION = 12; // seconds
 
 // Prestige Config
-export const PRESTIGE_REQUIREMENT = 1e14; // 100 Trillion essence
+export const PRESTIGE_REQUIREMENT = 1e12; // 1 Trillion essence
 
 export const calculatePrestigePoints = (totalCyclesEarned: number): number => {
     if (totalCyclesEarned < PRESTIGE_REQUIREMENT) {
         return 0;
     }
-    return Math.floor(Math.pow(totalCyclesEarned / 1e12, 0.4));
+    // Changed formula for faster prestige point gain
+    return Math.floor(10 * Math.pow(totalCyclesEarned / PRESTIGE_REQUIREMENT, 0.5));
 };
 
 export const PRESTIGE_UPGRADES: PrestigeUpgrade[] = [

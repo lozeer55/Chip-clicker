@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Upgrade } from '../types';
+import { formatNumber } from '../constants';
 
 interface BuildingDisplayProps {
   upgrades: Upgrade[];
@@ -43,7 +44,7 @@ const BuildingDisplay: React.FC<BuildingDisplayProps> = ({ upgrades }) => {
                 </div>
                 <span className="font-bold text-slate-200 text-lg leading-tight font-mono">{upgrade.level}</span>
                 <p className="text-xs text-pink-300 font-semibold mt-1 animate-cps-pulse font-mono" style={{ animationDelay: `${(index % 8) * 120}ms` }}>
-                    { (upgrade.power * upgrade.level).toLocaleString() } EPS
+                    { formatNumber(upgrade.power * upgrade.level) } EPS
                 </p>
               </div>
             ))}
