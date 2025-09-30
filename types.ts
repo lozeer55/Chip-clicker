@@ -149,6 +149,8 @@ export interface PrestigeUpgrade {
   bonus: PrestigeBonus;
   icon: React.ReactElement<{ className?: string }>;
   requires?: string;
+  x: number; // Position for the tree view (percentage)
+  y: number; // Position for the tree view (percentage)
 }
 
 export type SaveState = {

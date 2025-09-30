@@ -66,7 +66,7 @@ const MoonIcon = (props: React.SVGProps<SVGSVGElement>) => (
 const SunIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...props}><rect width="256" height="256" fill="none"/><circle cx="128" cy="128" r="60" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><line x1="128" y1="36" x2="128" y2="16" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><line x1="128" y1="240" x2="128" y2="220" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><line x1="62.1" y1="62.1" x2="48" y2="48" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><line x1="208" y1="208" x2="193.9" y2="193.9" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><line x1="36" y1="128" x2="16" y2="128" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><line x1="240" y1="128" x2="220" y2="128" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><line x1="62.1" y1="193.9" x2="48" y2="208" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><line x1="208" y1="48" x2="193.9" y2="62.1" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/></svg>
 );
-const GalaxyIcon = (props: React.SVGProps<SVGSVGElement>) => (
+export const GalaxyIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...props}><rect width="256" height="256" fill="none"/><path d="M37.7,184A95.8,95.8,0,0,1,32,128C32,75,75,32,128,32s96,43,96,96-43,96-96,96a95.4,95.4,0,0,1-56-17.7" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><circle cx="128" cy="128" r="32" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/><path d="M128,32a95.9,95.9,0,0,1,32,64c0,35.2-19.2,64-48,64s-48-28.8-48-64a47.9,47.9,0,0,1,16-36" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="16"/></svg>
 );
 const TreeIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -291,7 +291,7 @@ export const calculatePrestigePoints = (totalCyclesEarned: number): number => {
 };
 
 export const PRESTIGE_UPGRADES: PrestigeUpgrade[] = [
-    // General Boosts
+    // --- Center Path ---
     {
         id: 'perm_boost_1',
         name: 'Fuente de Maná Permanente',
@@ -299,7 +299,8 @@ export const PRESTIGE_UPGRADES: PrestigeUpgrade[] = [
         cost: (level) => Math.ceil(Math.pow(level + 1, 1.8)),
         level: 0,
         bonus: { type: 'all_cycles_multiplier', value: 0.01 },
-        icon: <StarIcon />
+        icon: <StarIcon />,
+        x: 50, y: 10,
     },
     {
         id: 'starting_cycles_1',
@@ -309,7 +310,9 @@ export const PRESTIGE_UPGRADES: PrestigeUpgrade[] = [
         level: 0,
         maxLevel: 10,
         bonus: { type: 'starting_cycles', value: 1000 },
-        icon: <RocketIcon />
+        icon: <RocketIcon />,
+        requires: 'perm_boost_1',
+        x: 50, y: 22,
     },
     {
         id: 'click_synergy_1',
@@ -319,9 +322,12 @@ export const PRESTIGE_UPGRADES: PrestigeUpgrade[] = [
         level: 0,
         maxLevel: 20,
         bonus: { type: 'cps_to_click_synergy', value: 0.001 },
-        icon: <PlusCircleIcon />
+        icon: <PlusCircleIcon />,
+        requires: 'starting_cycles_1',
+        x: 50, y: 34,
     },
-    // Ascension Tree
+
+    // --- Left Path (Ascension) ---
     {
         id: 'ascension_1',
         name: 'Ascensión de Aprendiz',
@@ -331,17 +337,8 @@ export const PRESTIGE_UPGRADES: PrestigeUpgrade[] = [
         maxLevel: 1,
         bonus: { type: 'increase_max_level', upgradeIds: ['stirring_rod', 'self_stir_cauldron', 'alchemist_wand', 'mystic_garden'], amount: 50 },
         icon: <UpgradeCapIcon />,
-    },
-    {
-        id: 'power_1',
-        name: 'Poder de Agitación',
-        description: () => `La Varilla Agitadora Encantada es un 25% más potente.`,
-        cost: () => 25,
-        level: 0,
-        maxLevel: 1,
-        requires: 'ascension_1',
-        bonus: { type: 'increase_power_multiplier', upgradeIds: ['stirring_rod'], multiplier: 1.25 },
-        icon: <PowerIcon />,
+        requires: 'starting_cycles_1',
+        x: 35, y: 34,
     },
     {
         id: 'ascension_2',
@@ -353,17 +350,7 @@ export const PRESTIGE_UPGRADES: PrestigeUpgrade[] = [
         requires: 'ascension_1',
         bonus: { type: 'increase_max_level', upgradeIds: ['potion_lab', 'infused_gloves', 'grimoire', 'moon_tears'], amount: 50 },
         icon: <UpgradeCapIcon />,
-    },
-    {
-        id: 'power_2',
-        name: 'Poder del Jardín',
-        description: () => `El Jardín de Hierbas Místicas es un 50% más potente.`,
-        cost: () => 40,
-        level: 0,
-        maxLevel: 1,
-        requires: 'ascension_2',
-        bonus: { type: 'increase_power_multiplier', upgradeIds: ['mystic_garden'], multiplier: 1.5 },
-        icon: <PowerIcon />,
+        x: 25, y: 45,
     },
     {
         id: 'ascension_3',
@@ -375,8 +362,47 @@ export const PRESTIGE_UPGRADES: PrestigeUpgrade[] = [
         requires: 'ascension_2',
         bonus: { type: 'increase_max_level', upgradeIds: ['scrying_pool', 'sunstone_catalyst', 'ethereal_portal', 'lunar_stir'], amount: 50 },
         icon: <UpgradeCapIcon />,
+        x: 20, y: 60,
     },
     {
+        id: 'ascension_4',
+        name: 'Ascensión Cósmica',
+        description: () => `Aumenta el nivel máximo de las mejoras de Dominio Cósmico en +25.`,
+        cost: () => 100,
+        level: 0,
+        maxLevel: 1,
+        requires: 'ascension_3',
+        bonus: { type: 'increase_max_level', upgradeIds: ['philosopher_stone', 'astral_foundry', 'solar_touch', 'world_tree'], amount: 25 },
+        icon: <UpgradeCapIcon />,
+        x: 15, y: 75,
+    },
+
+    // --- Right Path (Power) ---
+    {
+        id: 'power_1',
+        name: 'Poder de Agitación',
+        description: () => `La Varilla Agitadora Encantada es un 25% más potente.`,
+        cost: () => 25,
+        level: 0,
+        maxLevel: 1,
+        requires: 'starting_cycles_1',
+        bonus: { type: 'increase_power_multiplier', upgradeIds: ['stirring_rod'], multiplier: 1.25 },
+        icon: <PowerIcon />,
+        x: 65, y: 34,
+    },
+    {
+        id: 'power_2',
+        name: 'Poder del Jardín',
+        description: () => `El Jardín de Hierbas Místicas es un 50% más potente.`,
+        cost: () => 40,
+        level: 0,
+        maxLevel: 1,
+        requires: 'power_1',
+        bonus: { type: 'increase_power_multiplier', upgradeIds: ['mystic_garden'], multiplier: 1.5 },
+        icon: <PowerIcon />,
+        x: 75, y: 45,
+    },
+     {
         id: 'click_power_perm',
         name: 'Agitación Poderosa',
         description: (level) => `Aumenta la potencia de todas las mejoras de agitación en un 5%. (Acumulativo)`,
@@ -389,18 +415,8 @@ export const PRESTIGE_UPGRADES: PrestigeUpgrade[] = [
             multiplier: 1.05
         },
         icon: <PotionIcon />,
-        requires: 'power_1',
-    },
-    {
-        id: 'ascension_4',
-        name: 'Ascensión Cósmica',
-        description: () => `Aumenta el nivel máximo de las mejoras de Dominio Cósmico en +25.`,
-        cost: () => 100,
-        level: 0,
-        maxLevel: 1,
-        requires: 'ascension_3',
-        bonus: { type: 'increase_max_level', upgradeIds: ['philosopher_stone', 'astral_foundry', 'solar_touch', 'world_tree'], amount: 25 },
-        icon: <UpgradeCapIcon />,
+        requires: 'power_2',
+        x: 80, y: 60,
     },
 ];
 

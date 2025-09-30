@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import type { Upgrade, UpgradeTier, PrestigeUpgrade } from '../types';
-import { UPGRADE_TIERS, LockIcon, StarIcon, formatNumber } from '../constants';
+import type { Upgrade, UpgradeTier } from '../types';
+import { UPGRADE_TIERS, LockIcon, formatNumber } from '../constants';
 
 interface UpgradeItemProps {
   upgrade: Upgrade;
@@ -211,103 +211,13 @@ const UpgradeItem: React.FC<UpgradeItemProps> = ({ upgrade, onPurchase, cycles, 
   );
 };
 
-interface PrestigeUpgradeItemProps {
-    upgrade: PrestigeUpgrade;
-    onPurchase: (id: string) => void;
-    prestigePoints: number;
-    purchasedPrestigeUpgrades: Map<string, PrestigeUpgrade>;
-}
-
-const PrestigeUpgradeItem: React.FC<PrestigeUpgradeItemProps> = ({ upgrade, onPurchase, prestigePoints, purchasedPrestigeUpgrades }) => {
-    const cost = upgrade.cost(upgrade.level);
-    const isMaxLevel = upgrade.maxLevel !== undefined && upgrade.level >= upgrade.maxLevel;
-
-    const requirement = upgrade.requires ? purchasedPrestigeUpgrades.get(upgrade.requires) : null;
-    const isRequirementMet = !upgrade.requires || (requirement && requirement.level > 0);
-    
-    const canAfford = prestigePoints >= cost && isRequirementMet;
-
-    const handlePurchase = () => {
-        if (canAfford && !isMaxLevel) {
-            onPurchase(upgrade.id);
-        }
-    };
-    
-    if (!isRequirementMet) {
-        return (
-            <li className={`rounded-xl p-3 bg-slate-800/40 border border-slate-700/50 opacity-60`}>
-                <div className="w-full flex items-center gap-4 text-left">
-                    <div className="bg-slate-700/50 text-slate-500 p-3 rounded-lg flex-shrink-0">
-                        {React.cloneElement(upgrade.icon, { className: 'h-10 w-10' })}
-                    </div>
-                    <div className="flex-grow min-w-0">
-                        <h4 className="font-semibold text-lg text-slate-400 truncate">??????????</h4>
-                        <div className="text-sm text-slate-500 flex items-center gap-1 mt-1">
-                            <LockIcon className="h-4 w-4" />
-                            Requires '{requirement?.name || upgrade.requires}'
-                        </div>
-                    </div>
-                </div>
-            </li>
-        );
-    }
-
-
-    return (
-        <li className={`rounded-xl p-3 transition-all duration-200 bg-purple-900/40 hover:bg-purple-900/60 shadow-md hover:shadow-lg border ${canAfford && !isMaxLevel ? 'upgrade-affordable-glow border-purple-400/50' : 'border-purple-800/80'}`}>
-            <div className="flex flex-col sm:flex-row w-full items-start sm:items-center gap-3 text-left">
-                {/* Left/Top section */}
-                <div className="flex items-center gap-4 flex-grow min-w-0 w-full">
-                    <div className="bg-purple-500/10 text-purple-300 p-3 rounded-lg flex-shrink-0">
-                        {React.cloneElement(upgrade.icon, { className: 'h-10 w-10' })}
-                    </div>
-                    <div className="flex-grow min-w-0">
-                        <h4 className="font-semibold text-lg text-slate-100 truncate">{upgrade.name}</h4>
-                        <p className="text-sm text-slate-400">{upgrade.description(upgrade.level)}</p>
-                        <div className="text-base font-semibold text-purple-300 font-mono tracking-tight mt-1">
-                            Cost: {isMaxLevel ? "MAX" : `${cost.toLocaleString()} PP`}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Right/Bottom section */}
-                <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto flex-shrink-0">
-                    <div className="flex items-baseline gap-1">
-                        <span className="text-sm text-slate-400 font-medium">LVL</span>
-                        <span className="text-3xl font-bold text-slate-200 font-mono">
-                            {upgrade.level}{upgrade.maxLevel ? `/${upgrade.maxLevel}` : ''}
-                        </span>
-                    </div>
-                    <div className="w-[120px]">
-                        <button 
-                            onClick={handlePurchase}
-                            disabled={!canAfford || isMaxLevel}
-                            className={`w-full text-base font-bold py-3 px-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 active:scale-95 text-center
-                                ${canAfford && !isMaxLevel
-                                    ? 'bg-purple-600 hover:bg-purple-700 text-white button-affordable-glow'
-                                    : 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                                }`}
-                        >
-                            {isMaxLevel ? "Maxed" : "Purchase"}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </li>
-    );
-};
-
 interface UpgradeStoreProps {
   upgrades: Upgrade[];
   onPurchase: (id: string, levels: number) => void;
   cycles: number;
-  prestigePoints: number;
-  prestigeUpgrades: PrestigeUpgrade[];
-  onPurchasePrestige: (id: string) => void;
 }
 
-const UpgradeStore: React.FC<UpgradeStoreProps> = ({ upgrades, onPurchase, cycles, prestigePoints, prestigeUpgrades, onPurchasePrestige }) => {
-  const [activeTab, setActiveTab] = useState<'standard' | 'prestige'>('standard');
+const UpgradeStore: React.FC<UpgradeStoreProps> = ({ upgrades, onPurchase, cycles }) => {
   const totalLevels = useMemo(() => upgrades.reduce((sum, u) => sum + u.level, 0), [upgrades]);
   const [unlockedTiers, setUnlockedTiers] = useState<Set<string>>(() => {
     const initialTotalLevels = upgrades.reduce((sum, u) => sum + u.level, 0);
@@ -329,11 +239,6 @@ const UpgradeStore: React.FC<UpgradeStoreProps> = ({ upgrades, onPurchase, cycle
   const [buyAmount, setBuyAmount] = useState<number | 'max'>(1);
   const newlyUnlockedRef = useRef<Set<string>>(new Set());
 
-  const purchasedPrestigeUpgradesMap = useMemo(() => 
-      new Map(prestigeUpgrades.map(p => [p.id, p])),
-      [prestigeUpgrades]
-  );
-  
   useEffect(() => {
     const unlocked = new Set<string>();
     UPGRADE_TIERS.forEach((tier) => {
@@ -385,24 +290,9 @@ const UpgradeStore: React.FC<UpgradeStoreProps> = ({ upgrades, onPurchase, cycle
 
   return (
     <div className="bg-slate-900/50 rounded-2xl shadow-inner border border-slate-700/50 p-4 h-full flex flex-col">
-      <div className="flex-shrink-0 mb-4">
-        <div className="flex items-center justify-between">
-            <div className="text-left">
-                <div className="flex items-center gap-2 font-bold text-purple-300">
-                  <StarIcon className="h-5 w-5"/>
-                  <span className="text-xl font-mono">{prestigePoints.toLocaleString()}</span>
-                </div>
-                <span className="text-xs text-slate-400">Prestige Points</span>
-            </div>
-            <h3 className="text-4xl font-extrabold text-slate-100">Store</h3>
-        </div>
-        <div className="mt-4 border-b border-slate-700 flex">
-            <button onClick={() => setActiveTab('standard')} className={`px-4 py-2 text-sm font-bold transition-colors ${activeTab === 'standard' ? 'text-pink-400 border-b-2 border-pink-400' : 'text-slate-400 hover:text-slate-200'}`}>Standard</button>
-            <button onClick={() => setActiveTab('prestige')} className={`px-4 py-2 text-sm font-bold transition-colors ${activeTab === 'prestige' ? 'text-purple-400 border-b-2 border-purple-400' : 'text-slate-400 hover:text-slate-200'}`}>Prestige</button>
-        </div>
+      <div className="flex-shrink-0 mb-4 text-center">
+         <h3 className="text-4xl font-extrabold text-slate-100">Tienda</h3>
       </div>
-
-      {activeTab === 'standard' && (
         <>
           <div className="flex-shrink-0 mb-3 flex items-center justify-center gap-2">
             <span className="text-sm font-semibold text-slate-400">Elaborar:</span>
@@ -455,22 +345,6 @@ const UpgradeStore: React.FC<UpgradeStoreProps> = ({ upgrades, onPurchase, cycle
             })}
           </ul>
         </>
-      )}
-
-      {activeTab === 'prestige' && (
-        <ul className="space-y-3 flex-grow overflow-y-auto pr-2 -mr-2">
-            <p className="text-sm text-slate-400 p-2 text-center bg-slate-800/50 rounded-md mb-2">Purchase permanent upgrades. Some upgrades require others to be purchased first.</p>
-            {prestigeUpgrades.map(upgrade => (
-                <PrestigeUpgradeItem
-                    key={upgrade.id}
-                    upgrade={upgrade}
-                    onPurchase={onPurchasePrestige}
-                    prestigePoints={prestigePoints}
-                    purchasedPrestigeUpgrades={purchasedPrestigeUpgradesMap}
-                />
-            ))}
-        </ul>
-      )}
     </div>
   );
 };

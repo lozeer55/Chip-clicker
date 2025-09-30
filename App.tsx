@@ -20,9 +20,10 @@ import EventToast from './components/EventToast';
 import ShootingStar from './components/ShootingStar';
 import AdminModal from './components/AdminModal';
 import PrestigeTracker from './components/PrestigeTracker';
+import PrestigeModal from './components/PrestigeModal';
 import type { Upgrade, FloatingNumberType, GameSettings, PlayerStats, Achievement, ActiveBoost, MilestoneToastInfo, AchievementToastInfo, GoldenDropletType, SaveState, MobileView, PrestigeUpgrade, Challenge, ActiveChallengeState, ChallengeToastInfo, EventToastInfo, ShootingStarType } from './types';
 // FIX: Imported `LightningIcon` to resolve "Cannot find name 'LightningIcon'" error.
-import { INITIAL_UPGRADES, SettingsIcon, MILESTONES, ACHIEVEMENTS, AchievementIcon, ChartBarIcon, GOLDEN_DROPLET_LIFESPAN, GOLDEN_DROPLET_SPAWN_INTERVAL_MIN, GOLDEN_DROPLET_SPAWN_INTERVAL_MAX, GOLDEN_DROPLET_BOOST_MULTIPLIER, GOLDEN_DROPLET_BOOST_DURATION, PRESTIGE_UPGRADES, calculatePrestigePoints, DAILY_REWARDS, CHALLENGES, StopwatchIcon, RANDOM_EVENT_CONFIG, MagicIcon, LightningIcon, AdminIcon, PRESTIGE_REQUIREMENT } from './constants';
+import { INITIAL_UPGRADES, SettingsIcon, MILESTONES, ACHIEVEMENTS, AchievementIcon, ChartBarIcon, GOLDEN_DROPLET_LIFESPAN, GOLDEN_DROPLET_SPAWN_INTERVAL_MIN, GOLDEN_DROPLET_SPAWN_INTERVAL_MAX, GOLDEN_DROPLET_BOOST_MULTIPLIER, GOLDEN_DROPLET_BOOST_DURATION, PRESTIGE_UPGRADES, calculatePrestigePoints, DAILY_REWARDS, CHALLENGES, StopwatchIcon, RANDOM_EVENT_CONFIG, MagicIcon, LightningIcon, AdminIcon, PRESTIGE_REQUIREMENT, GalaxyIcon } from './constants';
 import { backgroundMusic, clickSound, milestoneSound, purchaseSound, achievementSound, goldenChipSpawnSound, goldenChipClickSound, prestigeSound } from './sounds';
 
 const SAVE_KEY = 'elixirClickerSave';
@@ -175,6 +176,7 @@ const App: React.FC = () => {
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isChallengesOpen, setIsChallengesOpen] = useState(false);
+  const [isPrestigeModalOpen, setIsPrestigeModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [currentMilestoneIndex, setCurrentMilestoneIndex] = useState<number>(initialMilestoneIndex);
   const [activeBoosts, setActiveBoosts] = useState<ActiveBoost[]>([]);
@@ -1087,6 +1089,13 @@ const App: React.FC = () => {
       })()}
       <div className="absolute top-4 right-4 z-50 flex gap-2 items-center">
         <button
+          onClick={() => setIsPrestigeModalOpen(true)}
+          className="p-3 rounded-full bg-slate-900/50 hover:bg-slate-800/80 text-slate-300 border border-slate-700 backdrop-blur-sm transition-all shadow-lg hover:shadow-purple-500/10 active:scale-95 hover:text-purple-300"
+          aria-label="Open Prestige Tree"
+        >
+          <GalaxyIcon className="h-6 w-6" />
+        </button>
+        <button
           onClick={() => setIsChallengesOpen(true)}
           className="p-3 rounded-full bg-slate-900/50 hover:bg-slate-800/80 text-slate-300 border border-slate-700 backdrop-blur-sm transition-all shadow-lg hover:shadow-pink-500/10 active:scale-95 hover:text-pink-300"
           aria-label="Open challenges"
@@ -1162,9 +1171,6 @@ const App: React.FC = () => {
               upgrades={upgrades}
               onPurchase={handlePurchaseUpgrade}
               cycles={cycles}
-              prestigePoints={prestigePoints}
-              prestigeUpgrades={prestigeUpgrades}
-              onPurchasePrestige={handlePurchasePrestigeUpgrade}
             />
         </div>
       </main>
@@ -1191,9 +1197,6 @@ const App: React.FC = () => {
                     upgrades={upgrades}
                     onPurchase={handlePurchaseUpgrade}
                     cycles={cycles}
-                    prestigePoints={prestigePoints}
-                    prestigeUpgrades={prestigeUpgrades}
-                    onPurchasePrestige={handlePurchasePrestigeUpgrade}
                  />
             )}
             {activeMobileView === 'progress' && (
@@ -1291,6 +1294,13 @@ const App: React.FC = () => {
         onAddPrestigePoints={(amount) => setPrestigePoints(p => p + amount)}
         onSetMaxPP={() => setPrestigePoints(999999)}
       />
+      <PrestigeModal
+        isOpen={isPrestigeModalOpen}
+        onClose={() => setIsPrestigeModalOpen(false)}
+        prestigePoints={prestigePoints}
+        prestigeUpgrades={prestigeUpgrades}
+        onPurchase={handlePurchasePrestigeUpgrade}
+       />
     </div>
   );
 };
