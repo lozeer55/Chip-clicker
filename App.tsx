@@ -1272,7 +1272,10 @@ const App: React.FC = () => {
         onClose={() => setIsAdminModalOpen(false)}
         gameState={gameState}
         onLoadState={handleLoadState}
-        onAddCycles={(amount) => setCycles(c => c + amount)}
+        onAddCycles={(amount) => {
+            setCycles(c => c + amount);
+            setPlayerStats(p => ({ ...p, totalCyclesEarned: p.totalCyclesEarned + amount }));
+        }}
         onAddPrestigePoints={(amount) => setPrestigePoints(p => p + amount)}
         onSetMaxPP={() => setPrestigePoints(999999)}
       />
