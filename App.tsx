@@ -18,9 +18,10 @@ import ChallengeTracker from './components/ChallengeTracker';
 import ChallengeToast from './components/ChallengeToast';
 import EventToast from './components/EventToast';
 import ShootingStar from './components/ShootingStar';
+import AdminModal from './components/AdminModal';
 import type { Upgrade, FloatingNumberType, GameSettings, PlayerStats, Achievement, ActiveBoost, MilestoneToastInfo, AchievementToastInfo, GoldenDropletType, SaveState, MobileView, PrestigeUpgrade, Challenge, ActiveChallengeState, ChallengeToastInfo, EventToastInfo, ShootingStarType } from './types';
 // FIX: Imported `LightningIcon` to resolve "Cannot find name 'LightningIcon'" error.
-import { INITIAL_UPGRADES, SettingsIcon, MILESTONES, ACHIEVEMENTS, AchievementIcon, ChartBarIcon, GOLDEN_DROPLET_LIFESPAN, GOLDEN_DROPLET_SPAWN_INTERVAL_MIN, GOLDEN_DROPLET_SPAWN_INTERVAL_MAX, GOLDEN_DROPLET_BOOST_MULTIPLIER, GOLDEN_DROPLET_BOOST_DURATION, PRESTIGE_UPGRADES, calculatePrestigePoints, DAILY_REWARDS, CHALLENGES, StopwatchIcon, RANDOM_EVENT_CONFIG, MagicIcon, LightningIcon } from './constants';
+import { INITIAL_UPGRADES, SettingsIcon, MILESTONES, ACHIEVEMENTS, AchievementIcon, ChartBarIcon, GOLDEN_DROPLET_LIFESPAN, GOLDEN_DROPLET_SPAWN_INTERVAL_MIN, GOLDEN_DROPLET_SPAWN_INTERVAL_MAX, GOLDEN_DROPLET_BOOST_MULTIPLIER, GOLDEN_DROPLET_BOOST_DURATION, PRESTIGE_UPGRADES, calculatePrestigePoints, DAILY_REWARDS, CHALLENGES, StopwatchIcon, RANDOM_EVENT_CONFIG, MagicIcon, LightningIcon, AdminIcon } from './constants';
 import { backgroundMusic, clickSound, milestoneSound, purchaseSound, achievementSound, goldenChipSpawnSound, goldenChipClickSound, prestigeSound } from './sounds';
 
 const SAVE_KEY = 'elixirClickerSave';
@@ -173,6 +174,7 @@ const App: React.FC = () => {
   const [isAchievementsOpen, setIsAchievementsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
   const [isChallengesOpen, setIsChallengesOpen] = useState(false);
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [currentMilestoneIndex, setCurrentMilestoneIndex] = useState<number>(initialMilestoneIndex);
   const [activeBoosts, setActiveBoosts] = useState<ActiveBoost[]>([]);
   const [notificationQueue, setNotificationQueue] = useState<Notification[]>([]);
@@ -1035,6 +1037,15 @@ const App: React.FC = () => {
     }
   }, []);
 
+  const handleAdminClick = () => {
+    const pass = prompt("Enter admin password:");
+    if (pass === 'elixir') {
+        setIsAdminModalOpen(true);
+    } else if (pass !== null) { // User didn't cancel
+        alert("Incorrect password.");
+    }
+  };
+
 
   return (
     <div className="h-screen bg-transparent text-slate-200 flex flex-col overflow-hidden relative font-sans pb-20 lg:pb-0">
@@ -1092,6 +1103,14 @@ const App: React.FC = () => {
           <SettingsIcon />
         </button>
       </div>
+
+      <button
+        onClick={handleAdminClick}
+        className="absolute bottom-2 left-2 z-50 p-2 rounded-full bg-slate-900/20 text-slate-700 hover:text-pink-400 hover:bg-slate-800/80 transition-all opacity-25 hover:opacity-100"
+        aria-label="Open Admin Panel"
+      >
+        <AdminIcon />
+      </button>
 
       {/* Desktop Layout */}
       <main className="hidden lg:grid w-full flex-grow p-4 grid-cols-1 lg:grid-cols-7 gap-4 min-h-0">
@@ -1243,6 +1262,15 @@ const App: React.FC = () => {
         upgrades={upgrades}
         unlockedAchievementsCount={unlockedAchievements.size}
         completedChallengesCount={completedChallenges.size}
+      />
+       <AdminModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        gameState={gameState}
+        onLoadState={handleLoadState}
+        onAddCycles={(amount) => setCycles(c => c + amount)}
+        onAddPrestigePoints={(amount) => setPrestigePoints(p => p + amount)}
+        onSetMaxPP={() => setPrestigePoints(999999)}
       />
     </div>
   );
