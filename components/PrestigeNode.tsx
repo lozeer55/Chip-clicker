@@ -14,8 +14,12 @@ const PrestigeNode: React.FC<PrestigeNodeProps> = ({ upgrade, prestigePoints, on
     
     const isRequirementMet = useMemo(() => {
         if (!upgrade.requires) return true;
-        const requiredUpgrade = upgradesMap.get(upgrade.requires);
-        return requiredUpgrade ? requiredUpgrade.level > 0 : false;
+        
+        const requirements = Array.isArray(upgrade.requires) ? upgrade.requires : [upgrade.requires];
+        return requirements.every(reqId => {
+            const requiredUpgrade = upgradesMap.get(reqId);
+            return requiredUpgrade ? requiredUpgrade.level > 0 : false;
+        });
     }, [upgrade.requires, upgradesMap]);
     
     const cost = upgrade.cost(upgrade.level);
@@ -26,7 +30,7 @@ const PrestigeNode: React.FC<PrestigeNodeProps> = ({ upgrade, prestigePoints, on
     const isPurchased = upgrade.level > 0;
 
     const getNodeClasses = () => {
-        const base = "absolute w-14 h-14 rounded-full border-4 flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200";
+        const base = "absolute w-14 h-14 rounded-full border-4 flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 transition-all duration-200 animate-node-appear";
         if (!isUnlocked) return `${base} bg-slate-700 border-slate-600 cursor-not-allowed`;
         if (isMaxed) return `${base} bg-yellow-500/20 border-yellow-400`;
         if (isAffordable) return `${base} bg-purple-800/50 border-purple-400 upgrade-affordable-glow cursor-pointer`;

@@ -16,6 +16,61 @@ const PrestigeTreeView: React.FC<PrestigeTreeViewProps> = ({ prestigeUpgrades, p
     
     const upgradesMap = useMemo(() => new Map(prestigeUpgrades.map(u => [u.id, u])), [prestigeUpgrades]);
 
+    const visibleUpgradesSet = useMemo(() => {
+        const visible = new Set<string>();
+        const purchasedIds = new Set<string>();
+
+        prestigeUpgrades.forEach(u => {
+            if (u.level > 0) {
+                purchasedIds.add(u.id);
+            }
+        });
+
+        // Determine which upgrades should be visible
+        prestigeUpgrades.forEach(upgrade => {
+            // Rule 1: Root nodes are always visible
+            if (!upgrade.requires) {
+                visible.add(upgrade.id);
+                return;
+            }
+            
+            const requirements = Array.isArray(upgrade.requires) ? upgrade.requires : [upgrade.requires];
+            
+            // Rule 2: A node is visible if all its requirements have been purchased
+            if (requirements.every(reqId => purchasedIds.has(reqId))) {
+                visible.add(upgrade.id);
+            }
+        });
+
+        // Rule 3: Ensure the entire path to any purchased node is also visible
+        const queue = [...purchasedIds];
+        const visited = new Set<string>();
+
+        while (queue.length > 0) {
+            const currentId = queue.shift()!;
+            if (visited.has(currentId)) continue;
+            
+            visited.add(currentId);
+            visible.add(currentId); // Ensure node is in the visible set
+            
+            const node = upgradesMap.get(currentId);
+            if (node?.requires) {
+                const requirements = Array.isArray(node.requires) ? node.requires : [node.requires];
+                requirements.forEach(reqId => {
+                    if (!visited.has(reqId)) {
+                        queue.push(reqId);
+                    }
+                });
+            }
+        }
+
+        return visible;
+    }, [prestigeUpgrades, upgradesMap]);
+
+    const upgradesToRender = useMemo(() => {
+        return prestigeUpgrades.filter(u => visibleUpgradesSet.has(u.id));
+    }, [prestigeUpgrades, visibleUpgradesSet]);
+
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
         isDragging.current = true;
         lastPos.current = { x: e.clientX, y: e.clientY };
@@ -82,29 +137,35 @@ const PrestigeTreeView: React.FC<PrestigeTreeViewProps> = ({ prestigeUpgrades, p
                 }}
             >
                 <svg className="absolute top-0 left-0 w-full h-full pointer-events-none" >
-                    {prestigeUpgrades.map(upgrade => {
-                        if (!upgrade.requires) return null;
-                        const parent = upgradesMap.get(upgrade.requires);
-                        if (!parent) return null;
+                    {upgradesToRender.map(upgrade => {
+                        const requirements = Array.isArray(upgrade.requires) ? upgrade.requires : (upgrade.requires ? [upgrade.requires] : []);
                         
-                        const isUnlocked = parent.level > 0;
+                        return requirements.map(reqId => {
+                            const parent = upgradesMap.get(reqId);
+                             // Draw line only if BOTH parent and child are visible.
+                            if (!parent || !visibleUpgradesSet.has(parent.id)) {
+                                return null;
+                            }
+                            
+                            const isUnlocked = parent.level > 0;
 
-                        return (
-                            <line
-                                key={`${parent.id}-${upgrade.id}`}
-                                x1={`${parent.x}%`}
-                                y1={`${parent.y}%`}
-                                x2={`${upgrade.x}%`}
-                                y2={`${upgrade.y}%`}
-                                stroke={isUnlocked ? 'rgba(192, 132, 252, 0.5)' : 'rgba(71, 85, 105, 0.5)'}
-                                strokeWidth={4 / view.zoom}
-                                strokeDasharray={isUnlocked ? 'none' : `${8 / view.zoom}`}
-                                className="transition-all duration-300"
-                            />
-                        );
+                            return (
+                                <line
+                                    key={`${parent.id}-${upgrade.id}`}
+                                    x1={`${parent.x}%`}
+                                    y1={`${parent.y}%`}
+                                    x2={`${upgrade.x}%`}
+                                    y2={`${upgrade.y}%`}
+                                    stroke={isUnlocked ? 'rgba(192, 132, 252, 0.5)' : 'rgba(71, 85, 105, 0.5)'}
+                                    strokeWidth={4 / view.zoom}
+                                    strokeDasharray={isUnlocked ? 'none' : `${8 / view.zoom}`}
+                                    className="transition-all duration-300"
+                                />
+                            );
+                        });
                     })}
                 </svg>
-                {prestigeUpgrades.map(upgrade => (
+                {upgradesToRender.map(upgrade => (
                     <PrestigeNode
                         key={upgrade.id}
                         upgrade={upgrade}
