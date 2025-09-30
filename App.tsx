@@ -1057,7 +1057,12 @@ const App: React.FC = () => {
   const handleResetGame = () => {
     if (window.confirm("Are you sure you want to reset all your progress? This cannot be undone.")) {
         try {
+            // Forcefully remove known keys first for good measure.
+            localStorage.removeItem(SAVE_KEY);
+            localStorage.removeItem(SETTINGS_KEY);
+            // Clear absolutely everything for the domain.
             localStorage.clear();
+            // Reload the page to start from a clean slate.
             window.location.reload();
         } catch (error) {
             console.error("Failed to clear saved data:", error);
