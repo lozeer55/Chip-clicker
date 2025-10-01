@@ -1203,7 +1203,7 @@ const App: React.FC = () => {
       </button>
 
       {/* Desktop Layout */}
-      <main className="hidden lg:grid w-full flex-grow p-4 grid-cols-1 lg:grid-cols-7 gap-4 min-h-0">
+      <main className="hidden lg:grid w-full flex-grow p-4 pt-20 grid-cols-1 lg:grid-cols-7 gap-4 min-h-0">
         <div className="lg:col-span-2 min-h-0">
             <GameArea
               cycles={cycles}
