@@ -13,6 +13,7 @@ const PrestigeTreeView: React.FC<PrestigeTreeViewProps> = ({ prestigeUpgrades, p
     const isDragging = useRef(false);
     const lastPos = useRef({ x: 0, y: 0 });
     const containerRef = useRef<HTMLDivElement>(null);
+    const pinchState = useRef({ initialDist: 0, isPinching: false });
     
     const upgradesMap = useMemo(() => new Map(prestigeUpgrades.map(u => [u.id, u])), [prestigeUpgrades]);
 
@@ -106,6 +107,58 @@ const PrestigeTreeView: React.FC<PrestigeTreeViewProps> = ({ prestigeUpgrades, p
         setView({ x: newX, y: newY, zoom: clampedZoom });
     }, [view]);
 
+    const handleTouchStart = useCallback((e: React.TouchEvent) => {
+        e.preventDefault();
+        if (e.touches.length === 2) {
+            pinchState.current.isPinching = true;
+            isDragging.current = false;
+            pinchState.current.initialDist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+        } else if (e.touches.length === 1) {
+            isDragging.current = true;
+            lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+    }, []);
+
+    const handleTouchMove = useCallback((e: React.TouchEvent) => {
+        e.preventDefault();
+        if (pinchState.current.isPinching && e.touches.length === 2) {
+            const newDist = Math.hypot(
+                e.touches[0].clientX - e.touches[1].clientX,
+                e.touches[0].clientY - e.touches[1].clientY
+            );
+            const newZoom = view.zoom * (newDist / pinchState.current.initialDist);
+            const clampedZoom = Math.max(0.5, Math.min(2, newZoom));
+            
+            const rect = containerRef.current!.getBoundingClientRect();
+            const midpointX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+            const midpointY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+
+            const newX = midpointX - (midpointX - view.x) * (clampedZoom / view.zoom);
+            const newY = midpointY - (midpointY - view.y) * (clampedZoom / view.zoom);
+            
+            setView({ x: newX, y: newY, zoom: clampedZoom });
+            pinchState.current.initialDist = newDist;
+
+        } else if (isDragging.current && e.touches.length === 1) {
+            const dx = e.touches[0].clientX - lastPos.current.x;
+            const dy = e.touches[0].clientY - lastPos.current.y;
+            setView(v => ({ ...v, x: v.x + dx, y: v.y + dy }));
+            lastPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+    }, [view]);
+
+    const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+        if (e.touches.length < 2) {
+            pinchState.current.isPinching = false;
+        }
+        if (e.touches.length < 1) {
+            isDragging.current = false;
+        }
+    }, []);
+
     // Set initial view to center the tree
     useEffect(() => {
         if (containerRef.current) {
@@ -117,7 +170,7 @@ const PrestigeTreeView: React.FC<PrestigeTreeViewProps> = ({ prestigeUpgrades, p
     return (
         <div
             ref={containerRef}
-            className="w-full h-full bg-slate-900 overflow-hidden relative cursor-grab"
+            className="w-full h-full bg-slate-900 overflow-hidden relative cursor-grab touch-none"
             style={{
                 background: `radial-gradient(ellipse at center, #1e293b 0%, #0f172a 100%)`,
             }}
@@ -126,6 +179,9 @@ const PrestigeTreeView: React.FC<PrestigeTreeViewProps> = ({ prestigeUpgrades, p
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
             onWheel={handleWheel}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
         >
             <div
                 className="absolute top-0 left-0"

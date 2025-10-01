@@ -45,16 +45,15 @@ const PrestigeNode: React.FC<PrestigeNodeProps> = ({ upgrade, prestigePoints, on
         return `${base} text-slate-200`;
     };
     
-    const handleNodeClick = (e: React.MouseEvent) => {
-        // Stop propagation to prevent the tree view's pan behavior from firing
+    const handleNodeClick = (e: React.MouseEvent | React.TouchEvent) => {
         e.stopPropagation();
         if (isAffordable) {
             onPurchase(upgrade.id);
         }
     };
     
-    // Prevent mouse down from starting a pan
-    const handleMouseDown = (e: React.MouseEvent) => {
+    // Prevent mouse down or touch start from starting a pan on the parent
+    const handleInteractionStart = (e: React.MouseEvent | React.TouchEvent) => {
         e.stopPropagation();
     };
 
@@ -67,7 +66,8 @@ const PrestigeNode: React.FC<PrestigeNodeProps> = ({ upgrade, prestigePoints, on
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
                 onClick={handleNodeClick}
-                onMouseDown={handleMouseDown}
+                onMouseDown={handleInteractionStart}
+                onTouchStart={handleInteractionStart}
                 aria-label={`Upgrade: ${upgrade.name}`}
             >
                 {React.cloneElement(upgrade.icon, { className: getIconClasses() })}
