@@ -54,10 +54,10 @@ const DailyRewardModal: React.FC<DailyRewardModalProps> = ({ isOpen, onClaim, st
             aria-modal="true"
             role="dialog"
         >
-            <div className="bg-slate-800 rounded-2xl shadow-xl p-6 w-full max-w-2xl text-slate-200 border border-slate-600/80 animate-fade-in-scale">
+            <div className="bg-slate-800 rounded-2xl shadow-xl p-6 w-full sm:max-w-2xl text-slate-200 border border-slate-600/80 animate-fade-in-scale">
                 <div className="text-center mb-6">
-                    <h2 className="text-3xl font-bold text-slate-100">Daily Login Reward</h2>
-                    <p className="text-pink-300 font-semibold text-lg mt-1">
+                    <h2 className="text-2xl sm:text-3xl font-bold text-slate-100">Daily Login Reward</h2>
+                    <p className="text-pink-300 font-semibold text-base sm:text-lg mt-1">
                         Your streak: <span className="font-mono">{streak} Day{streak > 1 ? 's' : ''}</span>!
                     </p>
                     <p className="text-slate-400 text-sm mt-1">Come back every day for better rewards. Missing a day will reset your streak.</p>
