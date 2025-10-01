@@ -5,11 +5,11 @@ import { LockIcon, formatNumber } from '../constants';
 interface PrestigeNodeProps {
     upgrade: PrestigeUpgrade;
     prestigePoints: number;
-    onPurchase: (id: string) => void;
+    onRequestPurchase: (id: string) => void;
     upgradesMap: Map<string, PrestigeUpgrade>;
 }
 
-const PrestigeNode: React.FC<PrestigeNodeProps> = ({ upgrade, prestigePoints, onPurchase, upgradesMap }) => {
+const PrestigeNode: React.FC<PrestigeNodeProps> = ({ upgrade, prestigePoints, onRequestPurchase, upgradesMap }) => {
     const [isHovered, setIsHovered] = useState(false);
     
     const isRequirementMet = useMemo(() => {
@@ -48,7 +48,7 @@ const PrestigeNode: React.FC<PrestigeNodeProps> = ({ upgrade, prestigePoints, on
     const handleNodeClick = (e: React.MouseEvent | React.TouchEvent) => {
         e.stopPropagation();
         if (isAffordable) {
-            onPurchase(upgrade.id);
+            onRequestPurchase(upgrade.id);
         }
     };
     

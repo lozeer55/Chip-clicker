@@ -5,10 +5,10 @@ import PrestigeNode from './PrestigeNode';
 interface PrestigeTreeViewProps {
     prestigeUpgrades: PrestigeUpgrade[];
     prestigePoints: number;
-    onPurchase: (id: string) => void;
+    onRequestPurchase: (id: string) => void;
 }
 
-const PrestigeTreeView: React.FC<PrestigeTreeViewProps> = ({ prestigeUpgrades, prestigePoints, onPurchase }) => {
+const PrestigeTreeView: React.FC<PrestigeTreeViewProps> = ({ prestigeUpgrades, prestigePoints, onRequestPurchase }) => {
     const [view, setView] = useState({ x: 0, y: 0, zoom: 1 });
     const isDragging = useRef(false);
     const lastPos = useRef({ x: 0, y: 0 });
@@ -226,7 +226,7 @@ const PrestigeTreeView: React.FC<PrestigeTreeViewProps> = ({ prestigeUpgrades, p
                         key={upgrade.id}
                         upgrade={upgrade}
                         prestigePoints={prestigePoints}
-                        onPurchase={onPurchase}
+                        onRequestPurchase={onRequestPurchase}
                         upgradesMap={upgradesMap}
                     />
                 ))}

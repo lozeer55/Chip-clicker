@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { PrestigeUpgrade } from '../types';
 import PrestigeTreeView from './PrestigeTreeView';
-import { StarIcon } from '../constants';
+import { StarIcon, formatNumber } from '../constants';
 
 interface PrestigeModalProps {
     isOpen: boolean;
@@ -13,8 +13,23 @@ interface PrestigeModalProps {
 
 const PrestigeModal: React.FC<PrestigeModalProps> = ({ isOpen, onClose, prestigePoints, prestigeUpgrades, onPurchase }) => {
     if (!isOpen) return null;
+
+    const [confirmingUpgrade, setConfirmingUpgrade] = useState<PrestigeUpgrade | null>(null);
+
+    const handleRequestPurchase = (upgradeId: string) => {
+        const upgrade = prestigeUpgrades.find(u => u.id === upgradeId);
+        if (upgrade) {
+            setConfirmingUpgrade(upgrade);
+        }
+    };
+
+    const handleConfirmPurchase = () => {
+        if (confirmingUpgrade) {
+            onPurchase(confirmingUpgrade.id);
+            setConfirmingUpgrade(null);
+        }
+    };
     
-    // The modal takes over the screen, so we can use a fragment here.
     return (
         <div 
             className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex flex-col p-4"
@@ -51,8 +66,54 @@ const PrestigeModal: React.FC<PrestigeModalProps> = ({ isOpen, onClose, prestige
                 <PrestigeTreeView
                     prestigeUpgrades={prestigeUpgrades}
                     prestigePoints={prestigePoints}
-                    onPurchase={onPurchase}
+                    onRequestPurchase={handleRequestPurchase}
                 />
+                
+                {confirmingUpgrade && (
+                    <div 
+                        className="absolute inset-0 bg-slate-900/60 z-10 flex items-center justify-center p-4 backdrop-blur-sm"
+                        onClick={() => setConfirmingUpgrade(null)}
+                    >
+                        <div 
+                            className="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-600 w-full max-w-md animate-fade-in-scale"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <h3 className="text-2xl font-bold text-slate-100 text-center mb-4">Confirmar Compra</h3>
+                            
+                            <div className="flex items-center gap-4 p-4 rounded-lg bg-slate-700/50 border border-slate-600">
+                                <div className="flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center bg-purple-800/50 text-slate-200 border-2 border-purple-600">
+                                    {React.cloneElement(confirmingUpgrade.icon, { className: 'h-8 w-8' })}
+                                </div>
+                                <div className="flex-grow min-w-0">
+                                    <h4 className="font-bold text-slate-200 truncate">{confirmingUpgrade.name}</h4>
+                                    <p className="text-sm text-slate-400">{confirmingUpgrade.description(confirmingUpgrade.level)}</p>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 p-3 bg-slate-700/50 rounded-lg text-center">
+                                <p className="text-slate-400 text-sm">Costo:</p>
+                                <p className="text-xl font-bold font-mono text-purple-300">
+                                    {formatNumber(confirmingUpgrade.cost(confirmingUpgrade.level))} Puntos de Prestigio
+                                </p>
+                            </div>
+                            
+                            <div className="flex gap-4 mt-6">
+                                <button 
+                                    onClick={() => setConfirmingUpgrade(null)}
+                                    className="w-full text-base font-bold py-3 px-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 active:scale-95 bg-slate-600 hover:bg-slate-500 text-white"
+                                >
+                                    Cancelar
+                                </button>
+                                <button 
+                                    onClick={handleConfirmPurchase}
+                                    className="w-full text-base font-bold py-3 px-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 active:scale-95 bg-purple-600 hover:bg-purple-700 text-white button-affordable-glow"
+                                >
+                                    Confirmar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
