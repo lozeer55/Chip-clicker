@@ -63,23 +63,23 @@ const ChallengesModal: React.FC<ChallengesModalProps> = ({ isOpen, onClose, chal
   if (!isOpen) return null;
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
+    if (e.target === e.currentTarget && window.innerWidth >= 640) {
       onClose();
     }
   };
 
   return (
     <div
-      className="fixed inset-0 bg-slate-900/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
+      className="fixed inset-0 bg-slate-900/70 flex items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm"
       onClick={handleBackdropClick}
       aria-modal="true"
       role="dialog"
     >
       <div
-        className="bg-slate-800 rounded-2xl shadow-xl p-4 sm:p-6 w-full max-w-3xl h-[80vh] flex flex-col text-slate-200 border border-slate-600/80"
+        className="bg-slate-800 w-full h-full sm:w-auto sm:h-auto sm:rounded-2xl shadow-xl sm:max-w-3xl sm:max-h-[80vh] flex flex-col text-slate-200 border-slate-600/80 sm:border"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-4 flex-shrink-0">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700 flex-shrink-0">
           <h2 className="text-2xl font-bold text-slate-100">Challenges</h2>
           <button
             onClick={onClose}
@@ -91,7 +91,7 @@ const ChallengesModal: React.FC<ChallengesModalProps> = ({ isOpen, onClose, chal
             </svg>
           </button>
         </div>
-        <div className="flex-grow overflow-y-auto -mr-3 pr-3">
+        <div className="flex-grow overflow-y-auto p-4 sm:p-6 sm:pr-3 sm:-mr-3">
           <ul className="space-y-3">
             {challenges.map(challenge => {
               const isUnlocked = playerStats.totalPrestiges >= challenge.unlockCondition.value;

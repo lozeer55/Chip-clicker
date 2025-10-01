@@ -50,11 +50,11 @@ const DailyRewardModal: React.FC<DailyRewardModalProps> = ({ isOpen, onClaim, st
 
     return (
         <div
-            className="fixed inset-0 bg-slate-900/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-900/70 flex items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm"
             aria-modal="true"
             role="dialog"
         >
-            <div className="bg-slate-800 rounded-2xl shadow-xl p-4 sm:p-6 w-full sm:max-w-2xl text-slate-200 border border-slate-600/80 animate-fade-in-scale">
+            <div className="bg-slate-800 w-full h-full sm:w-auto sm:h-auto sm:rounded-2xl shadow-xl p-4 sm:p-6 sm:max-w-2xl text-slate-200 border-slate-600/80 sm:border animate-fade-in-scale flex flex-col justify-center">
                 <div className="text-center mb-6">
                     <h2 className="text-2xl sm:text-3xl font-bold text-slate-100">Daily Login Reward</h2>
                     <p className="text-pink-300 font-semibold text-base sm:text-lg mt-1">

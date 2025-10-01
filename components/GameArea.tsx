@@ -120,20 +120,7 @@ const GameArea: React.FC<GameAreaProps> = ({
   const isCpsBoostActive = useMemo(() => activeBoosts.some(b => b.type === 'bps_multiplier'), [activeBoosts]);
 
   return (
-    <div className="bg-slate-900/50 rounded-2xl shadow-inner border border-slate-700/50 p-4 sm:p-6 flex flex-col items-center justify-between gap-4 h-full">
-        {/* Top Section */}
-        <div className="text-center w-full flex-shrink-0">
-            <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-100 tracking-tight hidden lg:block">
-                Elixir Clicker
-            </h1>
-            <div className="mt-2">
-                <h2 className="text-5xl sm:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-pink-400 to-purple-400 tracking-tighter font-mono" style={{textShadow: '0 0 15px rgba(219, 39, 119, 0.4)'}}>
-                    {formatNumber(Math.floor(cycles))}
-                </h2>
-                <p className="text-slate-400 font-medium text-lg tracking-wide">esencia</p>
-            </div>
-        </div>
-
+    <div className="bg-slate-900/50 rounded-2xl shadow-inner border border-slate-700/50 p-4 sm:p-6 flex flex-col items-center justify-around gap-2 h-full">
         {/* Middle Section with Boost and Clicker */}
         <div className="relative flex-grow flex flex-col items-center justify-center w-full">
             {activeBoosts.length > 0 && (

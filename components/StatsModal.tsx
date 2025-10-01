@@ -52,23 +52,23 @@ const StatsModal: React.FC<StatsModalProps> = ({
     const buildingsOwned = upgrades.filter(u => u.type === 'auto' && u.level > 0).length;
 
     const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (e.target === e.currentTarget) {
+        if (e.target === e.currentTarget && window.innerWidth >= 640) {
             onClose();
         }
     };
 
     return (
         <div
-            className="fixed inset-0 bg-slate-900/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
+            className="fixed inset-0 bg-slate-900/70 flex items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm"
             onClick={handleBackdropClick}
             aria-modal="true"
             role="dialog"
         >
             <div
-                className="bg-slate-800 rounded-2xl shadow-xl p-4 sm:p-6 w-full max-w-lg h-auto max-h-[85vh] flex flex-col text-slate-200 border border-slate-600/80"
+                className="bg-slate-800 w-full h-full sm:w-auto sm:h-auto sm:rounded-2xl shadow-xl sm:max-w-lg sm:max-h-[85vh] flex flex-col text-slate-200 border-slate-600/80 sm:border"
                 onClick={e => e.stopPropagation()}
             >
-                <div className="flex justify-between items-center mb-4 flex-shrink-0">
+                <div className="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700 flex-shrink-0">
                     <h2 className="text-2xl font-bold text-slate-100">Estadísticas</h2>
                     <button
                         onClick={onClose}
@@ -81,7 +81,7 @@ const StatsModal: React.FC<StatsModalProps> = ({
                     </button>
                 </div>
                 
-                <div className="flex-grow overflow-y-auto pr-3 -mr-3 space-y-6">
+                <div className="flex-grow overflow-y-auto p-4 sm:p-6 space-y-6">
                     {/* General Section */}
                     <section>
                         <SectionHeader title="General"><CauldronIcon className="h-5 w-5" /></SectionHeader>

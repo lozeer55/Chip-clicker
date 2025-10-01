@@ -32,11 +32,11 @@ const PrestigeModal: React.FC<PrestigeModalProps> = ({ isOpen, onClose, prestige
     
     return (
         <div 
-            className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex flex-col p-4"
+            className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex flex-col p-0 sm:p-4"
             aria-modal="true"
             role="dialog"
         >
-            <div className="relative flex-shrink-0 flex items-center justify-between mb-4">
+            <div className="relative flex-shrink-0 flex items-center justify-between p-4 border-b border-slate-700 sm:border-b-0 sm:mb-4">
                  <div className="flex items-center gap-4 bg-slate-900/70 border border-slate-700 rounded-full p-2 pr-4 shadow-lg">
                     <div className="flex items-center justify-center h-10 w-10 rounded-full bg-purple-500/20 text-purple-300">
                         <StarIcon className="h-6 w-6" />
@@ -47,7 +47,7 @@ const PrestigeModal: React.FC<PrestigeModalProps> = ({ isOpen, onClose, prestige
                     </div>
                 </div>
 
-                <div className="text-center">
+                <div className="hidden sm:block text-center">
                     <h2 className="text-3xl font-bold text-slate-100" style={{textShadow: '0 0 10px rgba(192, 132, 252, 0.5)'}}>Celestial Tree</h2>
                 </div>
                 
@@ -62,7 +62,7 @@ const PrestigeModal: React.FC<PrestigeModalProps> = ({ isOpen, onClose, prestige
                 </button>
             </div>
 
-            <div className="flex-grow bg-slate-800/50 rounded-2xl shadow-inner border border-slate-700/50 overflow-hidden relative">
+            <div className="flex-grow bg-slate-800/50 sm:rounded-2xl shadow-inner sm:border border-slate-700/50 overflow-hidden relative">
                 <PrestigeTreeView
                     prestigeUpgrades={prestigeUpgrades}
                     prestigePoints={prestigePoints}
@@ -97,7 +97,7 @@ const PrestigeModal: React.FC<PrestigeModalProps> = ({ isOpen, onClose, prestige
                                 </p>
                             </div>
                             
-                            <div className="flex gap-4 mt-6">
+                            <div className="flex flex-col sm:flex-row gap-4 mt-6">
                                 <button 
                                     onClick={() => setConfirmingUpgrade(null)}
                                     className="w-full text-base font-bold py-3 px-3 rounded-lg shadow-sm hover:shadow-md transition-all duration-150 active:scale-95 bg-slate-600 hover:bg-slate-500 text-white"

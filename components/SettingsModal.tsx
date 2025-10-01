@@ -85,23 +85,23 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
   };
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
+    if (e.target === e.currentTarget && window.innerWidth >= 640) {
       onClose();
     }
   };
 
   return (
     <div
-      className="fixed inset-0 bg-slate-900/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
+      className="fixed inset-0 bg-slate-900/70 flex items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm"
       onClick={handleBackdropClick}
       aria-modal="true"
       role="dialog"
     >
       <div
-        className="bg-slate-800 rounded-2xl shadow-xl p-4 sm:p-6 w-full max-w-md text-slate-200 border border-slate-600/80 max-h-[90vh] overflow-y-auto"
+        className="bg-slate-800 w-full h-full sm:w-auto sm:h-auto sm:rounded-2xl shadow-xl text-slate-200 border-slate-600/80 sm:border flex flex-col sm:max-w-md sm:max-h-[90vh]"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700 flex-shrink-0">
           <h2 className="text-2xl font-bold text-slate-100">Settings</h2>
           <button
             onClick={onClose}
@@ -114,7 +114,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
           </button>
         </div>
 
-        <div className="space-y-4">
+        <div className="p-4 sm:p-6 space-y-4 overflow-y-auto">
           {/* Audio Section */}
           <section>
             <h3 className="font-bold text-lg mb-2 text-slate-300 flex items-center"><SpeakerIcon /> Audio</h3>

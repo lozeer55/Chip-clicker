@@ -21,8 +21,9 @@ import ShootingStar from './components/ShootingStar';
 import AdminModal from './components/AdminModal';
 import PrestigeTracker from './components/PrestigeTracker';
 import PrestigeModal from './components/PrestigeModal';
+import Header from './components/Header';
 import type { Upgrade, FloatingNumberType, GameSettings, PlayerStats, Achievement, ActiveBoost, MilestoneToastInfo, AchievementToastInfo, GoldenDropletType, SaveState, MobileView, PrestigeUpgrade, Challenge, ActiveChallengeState, ChallengeToastInfo, EventToastInfo, ShootingStarType } from './types';
-import { INITIAL_UPGRADES, UPGRADE_TIERS, SettingsIcon, MILESTONES, ACHIEVEMENTS, AchievementIcon, ChartBarIcon, BASE_GOLDEN_DROPLET_CONFIG, PRESTIGE_UPGRADES, calculatePrestigePoints, DAILY_REWARDS, CHALLENGES, StopwatchIcon, BASE_RANDOM_EVENT_CONFIG, MagicIcon, LightningIcon, AdminIcon, PRESTIGE_REQUIREMENT, GalaxyIcon } from './constants';
+import { INITIAL_UPGRADES, UPGRADE_TIERS, MILESTONES, ACHIEVEMENTS, BASE_GOLDEN_DROPLET_CONFIG, PRESTIGE_UPGRADES, calculatePrestigePoints, DAILY_REWARDS, CHALLENGES, BASE_RANDOM_EVENT_CONFIG, LightningIcon, MagicIcon, AdminIcon, PRESTIGE_REQUIREMENT } from './constants';
 import { backgroundMusic, clickSound, milestoneSound, purchaseSound, achievementSound, goldenChipSpawnSound, goldenChipClickSound, prestigeSound } from './sounds';
 
 const SAVE_KEY = 'elixirClickerSave';
@@ -1157,7 +1158,7 @@ const App: React.FC = () => {
   const showPrestigeTracker = (playerStats.totalPrestiges > 0 || playerStats.totalCyclesEarned > PRESTIGE_REQUIREMENT * 0.01);
 
   return (
-    <div className="h-screen bg-transparent text-slate-200 flex flex-col overflow-hidden relative font-sans pb-20 lg:pb-0">
+    <div className="h-screen bg-transparent text-slate-200 flex flex-col overflow-hidden relative font-sans">
       {settings.showBackgroundEffects && <BackgroundEffects />}
       <DailyRewardModal
         isOpen={isDailyRewardModalOpen}
@@ -1182,43 +1183,16 @@ const App: React.FC = () => {
                 return null;
         }
       })()}
-      <div className="absolute top-4 right-4 z-50 flex gap-2 items-center">
-        <button
-          onClick={() => setIsPrestigeModalOpen(true)}
-          className="p-3 rounded-full bg-slate-900/50 hover:bg-slate-800/80 text-slate-300 border border-slate-700 backdrop-blur-sm transition-all shadow-lg hover:shadow-purple-500/10 active:scale-95 hover:text-purple-300"
-          aria-label="Open Prestige Tree"
-        >
-          <GalaxyIcon className="h-6 w-6" />
-        </button>
-        <button
-          onClick={() => setIsChallengesOpen(true)}
-          className="p-3 rounded-full bg-slate-900/50 hover:bg-slate-800/80 text-slate-300 border border-slate-700 backdrop-blur-sm transition-all shadow-lg hover:shadow-pink-500/10 active:scale-95 hover:text-pink-300"
-          aria-label="Open challenges"
-        >
-          <StopwatchIcon className="h-6 w-6" />
-        </button>
-        <button
-          onClick={() => setIsAchievementsOpen(true)}
-          className="p-3 rounded-full bg-slate-900/50 hover:bg-slate-800/80 text-slate-300 border border-slate-700 backdrop-blur-sm transition-all shadow-lg hover:shadow-pink-500/10 active:scale-95 hover:text-pink-300"
-          aria-label="Open achievements"
-        >
-          <AchievementIcon />
-        </button>
-        <button
-          onClick={() => setIsStatsOpen(true)}
-          className="p-3 rounded-full bg-slate-900/50 hover:bg-slate-800/80 text-slate-300 border border-slate-700 backdrop-blur-sm transition-all shadow-lg hover:shadow-pink-500/10 active:scale-95 hover:text-pink-300"
-          aria-label="Open statistics"
-        >
-          <ChartBarIcon />
-        </button>
-        <button
-          onClick={() => setIsSettingsOpen(true)}
-          className="p-3 rounded-full bg-slate-900/50 hover:bg-slate-800/80 text-slate-300 border border-slate-700 backdrop-blur-sm transition-all shadow-lg hover:shadow-pink-500/10 active:scale-95 hover:text-pink-300"
-          aria-label="Open settings"
-        >
-          <SettingsIcon />
-        </button>
-      </div>
+      
+      <Header 
+        cycles={cycles}
+        cyclesPerSecond={cyclesPerSecond}
+        onOpenPrestige={() => setIsPrestigeModalOpen(true)}
+        onOpenChallenges={() => setIsChallengesOpen(true)}
+        onOpenAchievements={() => setIsAchievementsOpen(true)}
+        onOpenStats={() => setIsStatsOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+      />
 
       <button
         onClick={handleAdminClick}
@@ -1271,18 +1245,37 @@ const App: React.FC = () => {
       </main>
 
       {/* Mobile Layout */}
-      <main className="lg:hidden w-full flex-grow p-4 flex flex-col min-h-0">
-        <div className="flex-grow min-h-0">
+      <main className="lg:hidden w-full flex-grow p-4 pt-20 pb-20 flex flex-col min-h-0">
+        <div className="flex-grow min-h-0 flex flex-col gap-4">
             {activeMobileView === 'main' && (
-                <GameArea
-                    cycles={cycles}
-                    cyclesPerClick={cyclesPerClick}
-                    cyclesPerSecond={cyclesPerSecond}
-                    onChipClick={handleChipClick}
-                    floatingNumbers={floatingNumbers}
-                    onAnimationEnd={handleAnimationEnd}
-                    activeBoosts={activeBoosts}
-                />
+                <>
+                    <div className="flex-grow min-h-0">
+                        <GameArea
+                            cycles={cycles}
+                            cyclesPerClick={cyclesPerClick}
+                            cyclesPerSecond={cyclesPerSecond}
+                            onChipClick={handleChipClick}
+                            floatingNumbers={floatingNumbers}
+                            onAnimationEnd={handleAnimationEnd}
+                            activeBoosts={activeBoosts}
+                        />
+                    </div>
+                    {activeChallenge ? (
+                        <ChallengeTracker
+                            activeChallenge={activeChallenge}
+                            cycles={cycles}
+                            upgrades={upgrades}
+                            onAbandon={handleAbandonChallenge}
+                        />
+                     ) : showPrestigeTracker ? (
+                        <PrestigeTracker playerStats={playerStats} onPrestige={handlePrestige} prestigePointBonus={prestigeBonuses.prestige_point_bonus} />
+                     ) : (
+                        <MilestoneTracker 
+                            currentMilestone={currentMilestone}
+                            playerStats={playerStats}
+                        />
+                     )}
+                </>
             )}
             {activeMobileView === 'buildings' && (
                  <BuildingDisplay upgrades={upgrades} />

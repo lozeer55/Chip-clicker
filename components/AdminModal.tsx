@@ -56,23 +56,23 @@ const AdminModal: React.FC<AdminModalProps> = ({
 
 
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
+    if (e.target === e.currentTarget && window.innerWidth >= 640) {
       onClose();
     }
   };
 
   return (
     <div
-      className="fixed inset-0 bg-slate-900/70 flex items-center justify-center z-50 p-4 backdrop-blur-sm"
+      className="fixed inset-0 bg-slate-900/70 flex items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm"
       onClick={handleBackdropClick}
       aria-modal="true"
       role="dialog"
     >
       <div
-        className="bg-slate-800 rounded-2xl shadow-xl p-4 sm:p-6 w-full max-w-2xl text-slate-200 border border-slate-600/80 max-h-[90vh] overflow-y-auto flex flex-col"
+        className="bg-slate-800 w-full h-full sm:w-auto sm:h-auto sm:rounded-2xl shadow-xl text-slate-200 border-slate-600/80 sm:border sm:max-w-2xl sm:max-h-[90vh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center mb-6 flex-shrink-0">
+        <div className="flex justify-between items-center p-4 sm:p-6 border-b border-slate-700 flex-shrink-0">
           <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-2"><AdminIcon /> Admin Panel</h2>
           <button
             onClick={onClose}
@@ -85,7 +85,7 @@ const AdminModal: React.FC<AdminModalProps> = ({
           </button>
         </div>
 
-        <div className="space-y-6 overflow-y-auto pr-2 -mr-4">
+        <div className="space-y-6 overflow-y-auto p-4 sm:p-6">
             {/* Quick Actions */}
             <section>
                 <h3 className="font-bold text-lg mb-2 text-pink-400">Quick Actions</h3>
