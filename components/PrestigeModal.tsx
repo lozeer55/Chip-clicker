@@ -75,7 +75,7 @@ const PrestigeModal: React.FC<PrestigeModalProps> = ({ isOpen, onClose, prestige
                         onClick={() => setConfirmingUpgrade(null)}
                     >
                         <div 
-                            className="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-600 w-full sm:max-w-md animate-fade-in-scale"
+                            className="bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-xl border border-slate-600 w-full sm:max-w-md animate-fade-in-scale"
                             onClick={e => e.stopPropagation()}
                         >
                             <h3 className="text-2xl font-bold text-slate-100 text-center mb-4">Confirmar Compra</h3>

@@ -65,7 +65,7 @@ const StatsModal: React.FC<StatsModalProps> = ({
             role="dialog"
         >
             <div
-                className="bg-slate-800 rounded-2xl shadow-xl p-6 w-full max-w-lg h-auto max-h-[85vh] flex flex-col text-slate-200 border border-slate-600/80"
+                className="bg-slate-800 rounded-2xl shadow-xl p-4 sm:p-6 w-full max-w-lg h-auto max-h-[85vh] flex flex-col text-slate-200 border border-slate-600/80"
                 onClick={e => e.stopPropagation()}
             >
                 <div className="flex justify-between items-center mb-4 flex-shrink-0">

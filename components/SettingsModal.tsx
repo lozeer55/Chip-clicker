@@ -98,7 +98,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, settings
       role="dialog"
     >
       <div
-        className="bg-slate-800 rounded-2xl shadow-xl p-6 w-full max-w-md text-slate-200 border border-slate-600/80 max-h-[90vh] overflow-y-auto"
+        className="bg-slate-800 rounded-2xl shadow-xl p-4 sm:p-6 w-full max-w-md text-slate-200 border border-slate-600/80 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-6">

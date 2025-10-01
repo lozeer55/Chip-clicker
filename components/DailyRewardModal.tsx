@@ -27,14 +27,14 @@ const RewardItem: React.FC<{ reward: DailyReward; isCurrent: boolean; }> = ({ re
     }
 
     return (
-        <div className={`relative p-3 text-center rounded-xl border-2 transition-all duration-300
+        <div className={`relative p-2 sm:p-3 text-center rounded-xl border-2 transition-all duration-300
             ${isCurrent ? 'bg-pink-900/40 border-pink-500 sm:scale-105 shadow-lg shadow-pink-500/20' : 'bg-slate-700/50 border-slate-600'}
         `}>
             <p className="font-bold text-sm text-slate-300">Day {reward.day}</p>
-            <div className={`my-2 flex justify-center text-4xl ${isCurrent ? 'text-pink-300' : 'text-slate-400'}`}>
-                {React.cloneElement(reward.icon, { className: 'w-10 h-10' })}
+            <div className={`my-1 sm:my-2 flex justify-center text-2xl sm:text-4xl ${isCurrent ? 'text-pink-300' : 'text-slate-400'}`}>
+                {React.cloneElement(reward.icon, { className: 'w-8 h-8' })}
             </div>
-            <h5 className="font-semibold text-slate-100 leading-tight text-sm">{reward.name}</h5>
+            <h5 className="font-semibold text-slate-100 leading-tight text-xs sm:text-sm">{reward.name}</h5>
             <p className="text-xs text-slate-400 mt-1">{description}</p>
         </div>
     )
@@ -54,7 +54,7 @@ const DailyRewardModal: React.FC<DailyRewardModalProps> = ({ isOpen, onClaim, st
             aria-modal="true"
             role="dialog"
         >
-            <div className="bg-slate-800 rounded-2xl shadow-xl p-6 w-full sm:max-w-2xl text-slate-200 border border-slate-600/80 animate-fade-in-scale">
+            <div className="bg-slate-800 rounded-2xl shadow-xl p-4 sm:p-6 w-full sm:max-w-2xl text-slate-200 border border-slate-600/80 animate-fade-in-scale">
                 <div className="text-center mb-6">
                     <h2 className="text-2xl sm:text-3xl font-bold text-slate-100">Daily Login Reward</h2>
                     <p className="text-pink-300 font-semibold text-base sm:text-lg mt-1">
@@ -63,7 +63,7 @@ const DailyRewardModal: React.FC<DailyRewardModalProps> = ({ isOpen, onClaim, st
                     <p className="text-slate-400 text-sm mt-1">Come back every day for better rewards. Missing a day will reset your streak.</p>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-3 mb-6">
+                <div className="grid grid-cols-4 lg:grid-cols-7 gap-2 mb-6">
                     {DAILY_REWARDS.map((reward, index) => (
                         <RewardItem 
                             key={reward.day}

@@ -99,7 +99,7 @@ const AchievementsModal: React.FC<AchievementsModalProps> = ({ isOpen, onClose, 
       role="dialog"
     >
       <div
-        className="bg-slate-800 rounded-2xl shadow-xl p-6 w-full max-w-2xl h-[80vh] flex flex-col text-slate-200 border border-slate-600/80"
+        className="bg-slate-800 rounded-2xl shadow-xl p-4 sm:p-6 w-full max-w-2xl h-[80vh] flex flex-col text-slate-200 border border-slate-600/80"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-4 flex-shrink-0">
